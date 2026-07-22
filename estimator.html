@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>片簾快速估價工具</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+  :root{
+    --ink:#232323;
+    --paper:#f2ede4;
+    --panel:#ffffff;
+    --brass:#a9813f;
+    --brass-dark:#8a6a30;
+    --line:#dcd4c4;
+    --good:#3c6e52;
+    --warn:#a94438;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans TC', sans-serif;
+    line-height:1.6;
+  }
+
+  .header{
+    position:relative;
+    background:#26241f;
+    color:#f2ede4;
+    padding:38px 24px 34px;
+    overflow:hidden;
+  }
+  .header .slats{
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(
+      180deg,
+      rgba(242,237,228,0.06) 0px,
+      rgba(242,237,228,0.06) 2px,
+      transparent 2px,
+      transparent 16px
+    );
+    pointer-events:none;
+  }
+  .header-inner{ position:relative; max-width:640px; margin:0 auto; }
+  .eyebrow{ font-size:12px; letter-spacing:0.18em; color:var(--brass); font-weight:700; }
+  h1{ font-family:'Noto Serif TC', serif; font-size:26px; margin:6px 0 4px; font-weight:700; }
+  .sub{ font-size:13.5px; color:#c9c2b2; }
+
+  .wrap{ max-width:640px; margin:0 auto; padding:28px 24px 60px; }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:24px;
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-size:14px; margin:0 0 16px; font-weight:700;
+    display:flex; align-items:center; gap:8px; color:#54503f;
+  }
+  .card h2::before{ content:""; width:3px; height:14px; background:var(--brass); display:inline-block; border-radius:2px; }
+
+  .row{ display:flex; gap:14px; }
+  .field{ flex:1; }
+  label{ display:block; font-size:12.5px; color:#726d5c; margin-bottom:6px; }
+  input[type=number]{
+    width:100%; padding:11px 12px; border:1px solid #cfc7b2; border-radius:5px;
+    font-size:16px; background:#fbfaf7; color:var(--ink);
+  }
+  input[type=number]:focus{ outline:none; border-color:var(--brass); }
+
+  button.primary{
+    width:100%; margin-top:16px; padding:13px; background:var(--brass); color:#fff;
+    border:none; border-radius:5px; font-size:15px; font-weight:700; cursor:pointer;
+    letter-spacing:0.02em; transition:background 0.15s ease;
+  }
+  button.primary:hover{ background:var(--brass-dark); }
+
+  .output{
+    white-space:pre-wrap; background:#fbfaf7; border:1px dashed #cfc7b2; border-radius:5px;
+    padding:16px; font-size:14.5px; min-height:110px; color:var(--ink);
+  }
+  .output.empty{ color:#a49d89; font-size:13.5px; }
+  .output.warn{ color:var(--warn); border-color:var(--warn); }
+
+  .copy-row{ display:flex; gap:10px; margin-top:12px; }
+  button.ghost{
+    flex:1; padding:10px; background:transparent; border:1px solid var(--brass);
+    color:var(--brass-dark); border-radius:5px; font-size:13.5px; cursor:pointer; font-weight:700;
+  }
+  button.ghost:hover{ background:#f6efe0; }
+  button.ghost.copied{ border-color:var(--good); color:var(--good); }
+
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  th{
+    text-align:left; font-size:11px; color:#8a836c; font-weight:700; padding:6px 5px;
+    border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  td{ padding:4px 5px; border-bottom:1px solid #eee8db; }
+  td input{
+    width:100%; padding:5px 6px; font-size:12.5px; border:1px solid #dcd4c0;
+    border-radius:4px; background:#fbfaf7;
+  }
+  td.readonly{ color:#726d5c; font-weight:700; }
+  td.dash{ color:#c2bca9; text-align:center; }
+
+  .note{ font-size:12px; color:#8a836c; margin-top:10px; }
+  details summary{ cursor:pointer; font-size:13px; color:#726d5c; font-weight:700; }
+  .table-scroll{ overflow-x:auto; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="slats"></div>
+  <div class="header-inner">
+    <div class="eyebrow">窗簾 · 片簾 快速估價</div>
+    <h1>輸入寬高,秒出報價文字</h1>
+    <div class="sub">自動比對 40 / 60 / 80mm 三種片幅款式,取最經濟的起價</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>輸入尺寸</h2>
+    <div class="row">
+      <div class="field">
+        <label for="w">寬度(公分)</label>
+        <input type="number" id="w" placeholder="例如 266" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label for="h">高度(公分)</label>
+        <input type="number" id="h" placeholder="例如 260" inputmode="decimal">
+      </div>
+    </div>
+    <button class="primary" onclick="generateQuote()">產生估價文字</button>
+  </div>
+
+  <div class="card">
+    <h2>輸出文字(可直接複製貼給客人)</h2>
+    <div class="output empty" id="output">尚未輸入尺寸</div>
+    <div class="copy-row">
+      <button class="ghost" id="copyBtn" onclick="copyOutput()">複製文字</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>價格對照表(捷安片簾略估價表 · 到府市價,可直接修改)</summary>
+      <div style="margin-top:14px;" class="table-scroll">
+        <div class="row" style="margin-bottom:14px; align-items:flex-end;">
+          <div class="field" style="flex:none; width:180px;">
+            <label for="bufferInput">到府估價緩衝金額($)</label>
+            <input type="number" id="bufferInput" value="2000" onchange="updateBuffer(this.value)">
+          </div>
+        </div>
+        <table id="priceTable">
+          <thead>
+            <tr>
+              <th>規格</th>
+              <th>最大寬(cm)</th>
+              <th>DIY 240低</th>
+              <th>DIY 240高</th>
+              <th>DIY 300低</th>
+              <th>DIY 300高</th>
+              <th>到府 240低</th>
+              <th>到府 240高</th>
+              <th>到府 300低</th>
+              <th>到府 300高</th>
+            </tr>
+          </thead>
+          <tbody id="priceBody"></tbody>
+        </table>
+        <div class="note">
+          「－」代表這個規格沒有此高度級距的報價(例如 80mm 片幅目前只做高300內)。系統會自動找每個片幅系列(40/60/80)裡「最大寬 ≥ 輸入寬度」且最接近的規格,取符合高度級距的到府低價,三個系列中取最低的作為「起」價。若輸入高度超過300cm,或寬度超過所有規格上限,會提示改人工報價。
+        </div>
+      </div>
+    </details>
+  </div>
+
+</div>
+
+<script>
+  // 捷安片簾略估價表(到府市價,含基本安裝、含稅)
+  // low240/high240/low300/high300 為 null 表示該級距無資料
+  let data = [
+    { spec:'40x4',  maxWidth:145, diy240Low:12000, diy240High:16000, diy300Low:13000, diy300High:18000, low240:14900, high240:18600, low300:15700, high300:20300 },
+    { spec:'40x5',  maxWidth:180, diy240Low:15000, diy240High:20000, diy300Low:16000, diy300High:22000, low240:17200, high240:21900, low300:18200, high300:24000 },
+    { spec:'40x6',  maxWidth:215, diy240Low:17000, diy240High:23000, diy300Low:18000, diy300High:25000, low240:19600, high240:25200, low300:20800, high300:27800 },
+    { spec:'40x7',  maxWidth:250, diy240Low:20000, diy240High:26000, diy300Low:21000, diy300High:29000, low240:22100, high240:28700, low300:23600, high300:31700 },
+    { spec:'60x4',  maxWidth:225, diy240Low:15000, diy240High:21000, diy300Low:16000, diy300High:24000, low240:17600, high240:23000, low300:18800, high300:26000 },
+    { spec:'60x5',  maxWidth:280, diy240Low:18000, diy240High:25000, diy300Low:20000, diy300High:29000, low240:20700, high240:27600, low300:22300, high300:31200 },
+    { spec:'60x6',  maxWidth:335, diy240Low:21000, diy240High:29000, diy300Low:23000, diy300High:34000, low240:23400, high240:31600, low300:25300, high300:36000 },
+    { spec:'60x7',  maxWidth:390, diy240Low:25000, diy240High:34000, diy300Low:27000, diy300High:39000, low240:27000, high240:36600, low300:29200, high300:41700 },
+    { spec:'60x8',  maxWidth:445, diy240Low:29000, diy240High:40000, diy300Low:31000, diy300High:45000, low240:31000, high240:41900, low300:33500, high300:47800 },
+    { spec:'60x10', maxWidth:555, diy240Low:34000, diy240High:48000, diy300Low:37000, diy300High:55000, low240:36600, high240:50200, low300:39700, high300:57600 },
+    { spec:'60x12', maxWidth:665, diy240Low:40000, diy240High:57000, diy300Low:44000, diy300High:65000, low240:42700, high240:59100, low300:46500, high300:67900 },
+    { spec:'80x6',  maxWidth:455, diy240Low:null,  diy240High:null,  diy300Low:28000, diy300High:44000, low240:null,  high240:null,  low300:30500, high300:46200 },
+    { spec:'80x7',  maxWidth:530, diy240Low:null,  diy240High:null,  diy300Low:32000, diy300High:51000, low240:null,  high240:null,  low300:34700, high300:53100 },
+    { spec:'80x8',  maxWidth:605, diy240Low:null,  diy240High:null,  diy300Low:37000, diy300High:58000, low240:null,  high240:null,  low300:39300, high300:60300 },
+    { spec:'80x10', maxWidth:755, diy240Low:null,  diy240High:null,  diy300Low:45000, diy300High:71000, low240:null,  high240:null,  low300:47600, high300:73900 },
+    { spec:'80x12', maxWidth:905, diy240Low:null,  diy240High:null,  diy300Low:54000, diy300High:86000, low240:null,  high240:null,  low300:56400, high300:87900 },
+  ];
+
+  function seriesOf(spec){ return spec.split('x')[0]; }
+
+  function renderTable(){
+    const body = document.getElementById('priceBody');
+    body.innerHTML = '';
+    data.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      const cell = (key) => {
+        if (row[key] === null) return `<td class="dash">－</td>`;
+        return `<td><input type="number" value="${row[key]}" onchange="updateCell(${i},'${key}',this.value)"></td>`;
+      };
+      tr.innerHTML = `
+        <td class="readonly">${row.spec}</td>
+        <td class="readonly">${row.maxWidth}</td>
+        ${cell('diy240Low')}
+        ${cell('diy240High')}
+        ${cell('diy300Low')}
+        ${cell('diy300High')}
+        ${cell('low240')}
+        ${cell('high240')}
+        ${cell('low300')}
+        ${cell('high300')}
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  function updateCell(i, key, value){
+    data[i][key] = Number(value);
+  }
+
+  // 到府安裝估價緩衝金額:避免抓到表定最低價,壓縮經銷實際報價的彈性空間
+  let ONSITE_BUFFER = 2000;
+
+  function updateBuffer(value){
+    ONSITE_BUFFER = Number(value) || 0;
+  }
+
+  function lowestForField(width, lowField, fallbackField){
+    const series = ['40','60','80'];
+    let candidates = [];
+
+    series.forEach(s => {
+      const rows = data.filter(r => seriesOf(r.spec) === s).sort((a,b) => a.maxWidth - b.maxWidth);
+      const match = rows.find(r => r.maxWidth >= width);
+      if (match){
+        let price = match[lowField];
+        // 若該高度級距沒資料(例如 80 系列沒有 240),退而使用 300 級距的資料當保守估計
+        if (price === null && match[fallbackField] !== null){
+          price = match[fallbackField];
+        }
+        if (price !== null && price !== undefined){
+          candidates.push(price);
+        }
+      }
+    });
+
+    if (candidates.length === 0) return null;
+    return Math.min(...candidates);
+  }
+
+  function findLowestQuote(width, height){
+    let onsiteField, diyField, fallbackOnsite, fallbackDiy;
+    if (height <= 240){
+      onsiteField = 'low240'; fallbackOnsite = 'low300';
+      diyField = 'diy240Low'; fallbackDiy = 'diy300Low';
+    } else if (height <= 300){
+      onsiteField = 'low300'; fallbackOnsite = 'low300';
+      diyField = 'diy300Low'; fallbackDiy = 'diy300Low';
+    } else {
+      return { error: 'height' };
+    }
+
+    const onsitePriceRaw = lowestForField(width, onsiteField, fallbackOnsite);
+    const diyPrice = lowestForField(width, diyField, fallbackDiy);
+
+    if (onsitePriceRaw === null && diyPrice === null) return { error: 'width' };
+
+    return {
+      onsitePrice: onsitePriceRaw !== null ? onsitePriceRaw + ONSITE_BUFFER : null,
+      diyPrice
+    };
+  }
+
+  function generateQuote(){
+    const w = parseFloat(document.getElementById('w').value);
+    const h = parseFloat(document.getElementById('h').value);
+    const output = document.getElementById('output');
+    output.classList.remove('warn');
+
+    if (!w || !h || w <= 0 || h <= 0){
+      output.textContent = '請輸入有效的寬度與高度';
+      output.classList.add('empty');
+      return;
+    }
+
+    const result = findLowestQuote(w, h);
+
+    if (result.error === 'height'){
+      output.textContent =
+`高度超過 300 公分,標準規格無資料
+請請經銷據點實際丈量報價
+您可提供電話 我請當地夥伴就近服務`;
+      output.classList.remove('empty');
+      output.classList.add('warn');
+      return;
+    }
+
+    if (result.error === 'width'){
+      output.textContent =
+`寬度超出標準規格上限,無法自動估價
+請請經銷據點實際丈量報價
+您可提供電話 我請當地夥伴就近服務`;
+      output.classList.remove('empty');
+      output.classList.add('warn');
+      return;
+    }
+
+    const onsiteLine = result.onsitePrice !== null
+      ? `當地到府粗估約 $${result.onsitePrice.toLocaleString()} 起`
+      : `當地到府暫無此尺寸資料`;
+    const diyLine = result.diyPrice !== null
+      ? `DIY粗估約 $${result.diyPrice.toLocaleString()} 起`
+      : `DIY暫無此尺寸資料`;
+
+    const text =
+`${onsiteLine}
+
+選定的款式與安裝需求會影響價格
+須以當地經銷估價為主
+
+您可提供電話 我請當地夥伴就近服務
+
+---
+
+${diyLine}
+取決款式`;
+
+    output.textContent = text;
+    output.classList.remove('empty');
+
+    const copyBtn = document.getElementById('copyBtn');
+    copyBtn.textContent = '複製文字';
+    copyBtn.classList.remove('copied');
+  }
+
+  function copyOutput(){
+    const output = document.getElementById('output');
+    if (output.classList.contains('empty')) return;
+
+    const text = output.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '已複製 ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '複製文字';
+        btn.classList.remove('copied');
+      }, 1800);
+    });
+  }
+
+  renderTable();
+</script>
+
+</body>
+</html>
