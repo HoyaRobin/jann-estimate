@@ -247,9 +247,9 @@
     ONSITE_BUFFER = Number(value) || 0;
   }
 
-  function lowestForField(width, lowField, fallbackField){
+  function matchesForField(width, lowField, fallbackField){
     const series = ['40','60','80'];
-    let candidates = [];
+    let matches = [];
 
     series.forEach(s => {
       const rows = data.filter(r => seriesOf(r.spec) === s).sort((a,b) => a.maxWidth - b.maxWidth);
@@ -261,13 +261,12 @@
           price = match[fallbackField];
         }
         if (price !== null && price !== undefined){
-          candidates.push(price);
+          matches.push({ series: s, spec: match.spec, maxWidth: match.maxWidth, price });
         }
       }
     });
 
-    if (candidates.length === 0) return null;
-    return Math.min(...candidates);
+    return matches;
   }
 
   function findLowestQuote(width, height){
@@ -282,15 +281,16 @@
       return { error: 'height' };
     }
 
-    const onsitePriceRaw = lowestForField(width, onsiteField, fallbackOnsite);
-    const diyPrice = lowestForField(width, diyField, fallbackDiy);
+    let onsiteMatches = matchesForField(width, onsiteField, fallbackOnsite)
+      .map(m => ({ ...m, price: m.price + ONSITE_BUFFER }));
+    const diyMatches = matchesForField(width, diyField, fallbackDiy);
 
-    if (onsitePriceRaw === null && diyPrice === null) return { error: 'width' };
+    if (onsiteMatches.length === 0 && diyMatches.length === 0) return { error: 'width' };
 
-    return {
-      onsitePrice: onsitePriceRaw !== null ? onsitePriceRaw + ONSITE_BUFFER : null,
-      diyPrice
-    };
+    const onsitePrice = onsiteMatches.length ? Math.min(...onsiteMatches.map(m => m.price)) : null;
+    const diyPrice = diyMatches.length ? Math.min(...diyMatches.map(m => m.price)) : null;
+
+    return { onsitePrice, diyPrice, onsiteMatches, diyMatches };
   }
 
   function generateQuote(){
@@ -334,18 +334,28 @@
       ? `DIY粗估約 $${result.diyPrice.toLocaleString()} 起`
       : `DIY暫無此尺寸資料`;
 
+    const seriesLabel = { '40':'40系列', '60':'60系列', '80':'80系列' };
+
+    const onsiteBreakdown = result.onsiteMatches
+      .map(m => `${seriesLabel[m.series]}:最接近的是 ${m.spec}(最大寬${m.maxWidth}),到府約 $${m.price.toLocaleString()} 起`)
+      .join('\n');
+
+    const diyBreakdown = result.diyMatches
+      .map(m => `${seriesLabel[m.series]}:最接近的是 ${m.spec}(最大寬${m.maxWidth}),DIY約 $${m.price.toLocaleString()} 起`)
+      .join('\n');
+
     const text =
 `${onsiteLine}
-
 選定的款式與安裝需求會影響價格
 須以當地經銷估價為主
-
 您可提供電話 我請當地夥伴就近服務
 
+${onsiteBreakdown}
 ---
-
 ${diyLine}
-取決款式`;
+取決款式
+
+${diyBreakdown}`;
 
     output.textContent = text;
     output.classList.remove('empty');
