@@ -93,6 +93,7 @@
   .output-columns{
     display:flex;
     gap:16px;
+    align-items:flex-start;
   }
   .output-col{
     flex:1;
@@ -108,7 +109,7 @@
     letter-spacing:0.05em;
   }
   .output-col .output{
-    flex:1;
+    flex:none;
     margin-bottom:10px;
   }
   .output-col button.ghost{
@@ -382,7 +383,7 @@
       ? `當地到府粗估約 $${result.onsitePrice.toLocaleString()} 起`
       : `當地到府暫無此尺寸資料`;
     const onsiteBreakdown = result.onsiteMatches
-      .map(m => `${seriesLabel[m.series]}:最接近的是 ${m.spec}(最大寬${m.maxWidth}),到府約 $${m.price.toLocaleString()} 起`)
+      .map(m => `${seriesLabel[m.series]}:適用規格 ${m.spec}(最大寬${m.maxWidth}),到府約 $${m.price.toLocaleString()} 起`)
       .join('\n');
 
     const onsiteText =
@@ -397,14 +398,19 @@ ${onsiteBreakdown}`;
       ? `DIY粗估約 $${result.diyPrice.toLocaleString()} 起`
       : `DIY暫無此尺寸資料`;
     const diyBreakdown = result.diyMatches
-      .map(m => `${seriesLabel[m.series]}:最接近的是 ${m.spec}(最大寬${m.maxWidth}),DIY約 $${m.price.toLocaleString()} 起`)
+      .map(m => `${seriesLabel[m.series]}:適用規格 ${m.spec}(最大寬${m.maxWidth}),DIY約 $${m.price.toLocaleString()} 起`)
       .join('\n');
 
     const diyText =
 `${diyLine}
 取決款式
 
-${diyBreakdown}`;
+${diyBreakdown}
+
+如需進一步討論DIY客製及選款估價
+請加官方LINE(FB訊息容易被淹沒)
+https://lihi.cc/kV4zZ
+ID:@homedesyne`;
 
     setBox('outputOnsite', 'copyBtnOnsite', onsiteText, false);
     setBox('outputDiy', 'copyBtnDiy', diyText, false);
