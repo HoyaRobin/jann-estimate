@@ -310,9 +310,14 @@
 
     if (result.error === 'height'){
       output.textContent =
-`高度超過 300 公分,標準規格無資料
-請請經銷據點實際丈量報價
-您可提供電話 我請當地夥伴就近服務`;
+`
+
+片簾高度上限300cm 
+超過需額外加裝金屬支架降高度 
+須請當地經銷／業務評估報價 
+
+您可提供電話 
+我請當地夥伴就近服務您務`;
       output.classList.remove('empty');
       output.classList.add('warn');
       return;
