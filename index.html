@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow, noarchive">
-<title>橘子班 尺寸速估試算</title>
+<title>橘子班 尺寸試算</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
 
@@ -90,6 +90,34 @@
   .output.empty{ color:#a49d89; font-size:13.5px; }
   .output.warn{ color:var(--warn); border-color:var(--warn); }
 
+  .output-columns{
+    display:flex;
+    gap:16px;
+  }
+  .output-col{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .output-label{
+    font-size:12px;
+    font-weight:700;
+    color:var(--brass-dark);
+    margin-bottom:8px;
+    letter-spacing:0.05em;
+  }
+  .output-col .output{
+    flex:1;
+    margin-bottom:10px;
+  }
+  .output-col button.ghost{
+    width:100%;
+  }
+  @media (max-width: 480px){
+    .output-columns{ flex-direction:column; }
+  }
+
   .copy-row{ display:flex; gap:10px; margin-top:12px; }
   button.ghost{
     flex:1; padding:10px; background:transparent; border:1px solid var(--brass);
@@ -146,9 +174,17 @@
 
   <div class="card">
     <h2>輸出文字(可直接複製貼給客人)</h2>
-    <div class="output empty" id="output">尚未輸入尺寸</div>
-    <div class="copy-row">
-      <button class="ghost" id="copyBtn" onclick="copyOutput()">複製文字</button>
+    <div class="output-columns">
+      <div class="output-col">
+        <div class="output-label">到府</div>
+        <div class="output empty" id="outputOnsite">尚未輸入尺寸</div>
+        <button class="ghost" id="copyBtnOnsite" onclick="copyOutput('onsite')">複製到府文字</button>
+      </div>
+      <div class="output-col">
+        <div class="output-label">DIY</div>
+        <div class="output empty" id="outputDiy">尚未輸入尺寸</div>
+        <button class="ghost" id="copyBtnDiy" onclick="copyOutput('diy')">複製DIY文字</button>
+      </div>
     </div>
   </div>
 
@@ -294,94 +330,101 @@
     return { onsitePrice, diyPrice, onsiteMatches, diyMatches };
   }
 
+  function setBox(id, btnId, text, isWarn){
+    const box = document.getElementById(id);
+    box.textContent = text;
+    box.classList.remove('empty');
+    box.classList.toggle('warn', !!isWarn);
+    const btn = document.getElementById(btnId);
+    btn.classList.remove('copied');
+  }
+
   function generateQuote(){
     const w = parseFloat(document.getElementById('w').value);
     const h = parseFloat(document.getElementById('h').value);
-    const output = document.getElementById('output');
-    output.classList.remove('warn');
 
     if (!w || !h || w <= 0 || h <= 0){
-      output.textContent = '請輸入有效的寬度與高度';
-      output.classList.add('empty');
+      setBox('outputOnsite', 'copyBtnOnsite', '請輸入有效的寬度與高度', false);
+      setBox('outputDiy', 'copyBtnDiy', '請輸入有效的寬度與高度', false);
+      document.getElementById('outputOnsite').classList.add('empty');
+      document.getElementById('outputDiy').classList.add('empty');
       return;
     }
 
     const result = findLowestQuote(w, h);
 
     if (result.error === 'height'){
-      output.textContent =
-`
+      const msg =
+`片簾高度上限300cm
+超過需額外加裝金屬支架降高度
+須請當地經銷／業務評估報價
 
-片簾高度上限300cm 
-超過需額外加裝金屬支架降高度 
-須請當地經銷／業務評估報價 
-
-您可提供電話 
-我請當地夥伴就近服務您務`;
-      output.classList.remove('empty');
-      output.classList.add('warn');
+您可提供電話
+我請當地夥伴就近服務您`;
+      setBox('outputOnsite', 'copyBtnOnsite', msg, true);
+      setBox('outputDiy', 'copyBtnDiy', msg, true);
       return;
     }
 
     if (result.error === 'width'){
-      output.textContent =
+      const msg =
 `寬度超出標準規格上限,無法自動估價
 請請經銷據點實際丈量報價
 您可提供電話 我請當地夥伴就近服務`;
-      output.classList.remove('empty');
-      output.classList.add('warn');
+      setBox('outputOnsite', 'copyBtnOnsite', msg, true);
+      setBox('outputDiy', 'copyBtnDiy', msg, true);
       return;
     }
+
+    const seriesLabel = { '40':'40系列', '60':'60系列', '80':'80系列' };
 
     const onsiteLine = result.onsitePrice !== null
       ? `當地到府粗估約 $${result.onsitePrice.toLocaleString()} 起`
       : `當地到府暫無此尺寸資料`;
-    const diyLine = result.diyPrice !== null
-      ? `DIY粗估約 $${result.diyPrice.toLocaleString()} 起`
-      : `DIY暫無此尺寸資料`;
-
-    const seriesLabel = { '40':'40系列', '60':'60系列', '80':'80系列' };
-
     const onsiteBreakdown = result.onsiteMatches
       .map(m => `${seriesLabel[m.series]}:最接近的是 ${m.spec}(最大寬${m.maxWidth}),到府約 $${m.price.toLocaleString()} 起`)
       .join('\n');
 
-    const diyBreakdown = result.diyMatches
-      .map(m => `${seriesLabel[m.series]}:最接近的是 ${m.spec}(最大寬${m.maxWidth}),DIY約 $${m.price.toLocaleString()} 起`)
-      .join('\n');
-
-    const text =
+    const onsiteText =
 `${onsiteLine}
 選定的款式與安裝需求會影響價格
 須以當地經銷估價為主
 您可提供電話 我請當地夥伴就近服務
 
-${onsiteBreakdown}
----
-${diyLine}
+${onsiteBreakdown}`;
+
+    const diyLine = result.diyPrice !== null
+      ? `DIY粗估約 $${result.diyPrice.toLocaleString()} 起`
+      : `DIY暫無此尺寸資料`;
+    const diyBreakdown = result.diyMatches
+      .map(m => `${seriesLabel[m.series]}:最接近的是 ${m.spec}(最大寬${m.maxWidth}),DIY約 $${m.price.toLocaleString()} 起`)
+      .join('\n');
+
+    const diyText =
+`${diyLine}
 取決款式
 
 ${diyBreakdown}`;
 
-    output.textContent = text;
-    output.classList.remove('empty');
-
-    const copyBtn = document.getElementById('copyBtn');
-    copyBtn.textContent = '複製文字';
-    copyBtn.classList.remove('copied');
+    setBox('outputOnsite', 'copyBtnOnsite', onsiteText, false);
+    setBox('outputDiy', 'copyBtnDiy', diyText, false);
   }
 
-  function copyOutput(){
-    const output = document.getElementById('output');
-    if (output.classList.contains('empty')) return;
+  function copyOutput(which){
+    const boxId = which === 'onsite' ? 'outputOnsite' : 'outputDiy';
+    const btnId = which === 'onsite' ? 'copyBtnOnsite' : 'copyBtnDiy';
+    const label = which === 'onsite' ? '複製到府文字' : '複製DIY文字';
 
-    const text = output.textContent;
+    const box = document.getElementById(boxId);
+    if (box.classList.contains('empty')) return;
+
+    const text = box.textContent;
     navigator.clipboard.writeText(text).then(() => {
-      const btn = document.getElementById('copyBtn');
+      const btn = document.getElementById(btnId);
       btn.textContent = '已複製 ✓';
       btn.classList.add('copied');
       setTimeout(() => {
-        btn.textContent = '複製文字';
+        btn.textContent = label;
         btn.classList.remove('copied');
       }, 1800);
     });
