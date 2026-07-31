@@ -386,14 +386,14 @@
       .map(m => `${seriesLabel[m.series]}:適用規格 ${m.spec}(最大寬${m.maxWidth}),到府約 $${m.price.toLocaleString()} 起`)
       .join('\n');
 
-    const dimLine = `W${w} H${h}`;
+    const dimLine = `捷安片簾 W${w} H${h} 公分`;
 
     const onsiteText =
 `${dimLine}
 ${onsiteLine}
-選定的款式與安裝需求會影響價格
-須以當地經銷估價為主
-您可提供電話 我請當地夥伴就近服務
+選定的款式＋安裝需求，會影響價格
+須以當地經銷／業務討論後估價為主
+您可提供電話，我請當地夥伴就近服務
 
 ${onsiteBreakdown}`;
 
