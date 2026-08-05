@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>橘子班 到府安裝報價</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+  :root{
+    --ink:#232323;
+    --paper:#f2ede4;
+    --panel:#ffffff;
+    --brass:#a9813f;
+    --brass-dark:#8a6a30;
+    --line:#dcd4c4;
+    --good:#3c6e52;
+    --warn:#a94438;
+    --sub:#726d5c;
+    --sub2:#8a836c;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans TC', sans-serif;
+    line-height:1.6;
+  }
+
+  .header{
+    position:relative;
+    background:#26241f;
+    color:#f2ede4;
+    padding:38px 24px 34px;
+    overflow:hidden;
+  }
+  .header .slats{
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(
+      180deg,
+      rgba(242,237,228,0.06) 0px,
+      rgba(242,237,228,0.06) 2px,
+      transparent 2px,
+      transparent 16px
+    );
+    pointer-events:none;
+  }
+  .header-inner{ position:relative; max-width:760px; margin:0 auto; }
+  .eyebrow{ font-size:12px; letter-spacing:0.18em; color:var(--brass); font-weight:700; }
+  h1{ font-family:'Noto Serif TC', serif; font-size:26px; margin:6px 0 4px; font-weight:700; }
+  .sub{ font-size:13.5px; color:#c9c2b2; }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:28px 24px 80px; }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:24px;
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-size:14px; margin:0 0 16px; font-weight:700;
+    display:flex; align-items:center; gap:8px; color:#54503f;
+  }
+  .card h2::before{ content:""; width:3px; height:14px; background:var(--brass); display:inline-block; border-radius:2px; }
+
+  .row{ display:flex; gap:14px; flex-wrap:wrap; }
+  .field{ flex:1; min-width:110px; }
+  label{ display:block; font-size:12.5px; color:var(--sub); margin-bottom:6px; }
+  input[type=number], select{
+    width:100%; padding:11px 12px; border:1px solid #cfc7b2; border-radius:5px;
+    font-size:15px; background:#fbfaf7; color:var(--ink);
+  }
+  input[type=number]:focus, select:focus{ outline:none; border-color:var(--brass); }
+
+  .seg{
+    display:flex; gap:8px; margin-top:6px;
+  }
+  .seg label{
+    flex:1; margin:0; text-align:center; padding:10px 6px; border:1px solid #cfc7b2; border-radius:5px;
+    background:#fbfaf7; cursor:pointer; font-size:14px; font-weight:700; color:var(--sub); transition:all .12s ease;
+  }
+  .seg input{ display:none; }
+  .seg input:checked + span{ color:#fff; }
+  .seg label:has(input:checked){ background:var(--brass); border-color:var(--brass); }
+  .seg label:has(input:checked) span{ color:#fff; }
+
+  button.primary{
+    padding:11px 18px; background:var(--brass); color:#fff;
+    border:none; border-radius:5px; font-size:14px; font-weight:700; cursor:pointer;
+    letter-spacing:0.02em; transition:background 0.15s ease;
+  }
+  button.primary:hover{ background:var(--brass-dark); }
+
+  button.ghost{
+    padding:9px 14px; background:transparent; border:1px solid var(--brass);
+    color:var(--brass-dark); border-radius:5px; font-size:13px; cursor:pointer; font-weight:700;
+  }
+  button.ghost:hover{ background:#f6efe0; }
+
+  button.danger{
+    padding:7px 12px; background:transparent; border:1px solid #d8beb8;
+    color:var(--warn); border-radius:5px; font-size:12.5px; cursor:pointer; font-weight:700;
+  }
+  button.danger:hover{ background:#fbf0ee; }
+
+  .window-card{
+    border:1px solid var(--line); border-radius:6px; padding:18px; margin-bottom:16px; background:#fdfcfa;
+  }
+  .window-head{
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;
+  }
+  .window-title{ font-weight:700; font-size:14.5px; color:#54503f; }
+
+  .match-box{
+    margin-top:14px; padding:12px 14px; background:#f6f2e8; border:1px dashed #d9cfb4; border-radius:5px;
+    font-size:13px; color:#5c5642;
+  }
+  .match-box.warn{ background:#fbf0ee; border-color:#d8beb8; color:var(--warn); }
+  .match-box b{ color:var(--brass-dark); }
+
+  .style-row{
+    display:flex; gap:10px; align-items:flex-end; margin-top:10px; padding-top:10px; border-top:1px solid #eee8db;
+  }
+  .style-row:first-of-type{ border-top:none; margin-top:0; padding-top:0; }
+  .style-row .field{ flex:3; }
+  .style-row .field.qty{ flex:1; min-width:70px; }
+  .style-row .price-tag{
+    flex:0 0 auto; font-size:12.5px; color:var(--sub2); min-width:78px; text-align:right; padding-bottom:12px;
+  }
+
+  .add-style-btn{ margin-top:12px; }
+
+  .summary-line{
+    display:flex; justify-content:space-between; font-size:13.5px; padding:6px 0; border-bottom:1px dashed #eee8db;
+  }
+  .summary-line.total{
+    font-size:16px; font-weight:700; border-bottom:none; border-top:1px solid var(--line);
+    margin-top:8px; padding-top:12px; color:var(--brass-dark);
+  }
+  .summary-line .lbl{ color:var(--sub); }
+  .summary-line.total .lbl{ color:var(--ink); }
+
+  .toggle-row{
+    display:flex; align-items:center; gap:10px; margin-top:14px; font-size:13.5px; color:var(--sub);
+  }
+  .toggle-row input{ width:17px; height:17px; }
+
+  .output{
+    white-space:pre-wrap; background:#fbfaf7; border:1px dashed #cfc7b2; border-radius:5px;
+    padding:16px; font-size:14px; min-height:80px; color:var(--ink); margin-top:14px;
+  }
+  .output.empty{ color:#a49d89; font-size:13.5px; }
+
+  .note{ font-size:12px; color:var(--sub2); margin-top:10px; line-height:1.7; }
+  .btn-row{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .btn-row.right{ justify-content:flex-end; }
+
+  select:disabled{ color:#b3ab97; background:#f2efe6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="slats"></div>
+  <div class="header-inner">
+    <div class="eyebrow">內部工具 · 橘子班 · 門市到府報價</div>
+    <h1>到府安裝正式報價試算</h1>
+    <div class="sub">依片幅／款式／片數精算，含安裝與加價項目，未稅金額自動加稅 5%</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div id="windowsContainer"></div>
+
+  <div class="btn-row">
+    <button class="primary" onclick="addWindow()">＋ 新增一組窗（軌道）</button>
+  </div>
+
+  <div class="card">
+    <h2>整單加價項目</h2>
+    <div class="toggle-row">
+      <input type="checkbox" id="noElevator" onchange="renderSummary()">
+      <label for="noElevator" style="margin:0;">無電梯（整單 +500）</label>
+    </div>
+    <div class="note">
+      安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。若貴公司規則是每窗都要收安裝費，請告訴我，我再改邏輯。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>報價明細</h2>
+    <div id="summaryBox"></div>
+    <div class="output empty" id="outputText">尚未輸入任何窗戶資料</div>
+    <div class="btn-row right">
+      <button class="ghost" id="copyBtn" onclick="copyOutput()">複製報價文字</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============ 資料 ============ */
+
+// 軌道價格表：遮蔽寬度區間、片幅、片數、未稅牌價
+const TRACKS = [
+  // 40 系列
+  { series:'40', minW:85,  maxW:145, pieces:4,  price:4800 },
+  { series:'40', minW:100, maxW:180, pieces:5,  price:5500 },
+  { series:'40', minW:120, maxW:215, pieces:6,  price:6300 },
+  { series:'40', minW:145, maxW:250, pieces:7,  price:7200 },
+  // 60 系列
+  { series:'60', minW:125, maxW:225, pieces:4,  price:5800 },
+  { series:'60', minW:150, maxW:280, pieces:5,  price:6900 },
+  { series:'60', minW:180, maxW:335, pieces:6,  price:7550 },
+  { series:'60', minW:280, maxW:390, pieces:7,  price:9100 },
+  { series:'60', minW:330, maxW:445, pieces:8,  price:11000 },
+  { series:'60', minW:305, maxW:555, pieces:10, price:12500 },
+  { series:'60', minW:355, maxW:665, pieces:12, price:14500 },
+  // 80 系列
+  { series:'80', minW:330, maxW:455, pieces:6,  price:9500 },
+  { series:'80', minW:295, maxW:530, pieces:7,  price:10800 },
+  { series:'80', minW:330, maxW:605, pieces:8,  price:12500 },
+  { series:'80', minW:495, maxW:755, pieces:10, price:15000 },
+  { series:'80', minW:495, maxW:905, pieces:12, price:18000 },
+];
+
+// 布料價格表：name, type(布種), code(布號), series(片幅), heightTier(240/300), avail(V/X), price
+function F(name, type, code, series, tier, avail, price){
+  return { name, type, code, series, tier, avail, price };
+}
+const FABRICS = [
+  ...['P10-現代幾何|透光'].flatMap(()=>[]),
+  F('現代幾何','透光','P10','40',240,'V',1900), F('現代幾何','透光','P10','40',300,'V',2200),
+  F('現代幾何','透光','P10','60',240,'V',2400), F('現代幾何','透光','P10','60',300,'V',2800),
+  F('現代幾何','透光','P10','80',300,'V',3700),
+
+  F('北歐花影','透光','P11','60',240,'V',2800), F('北歐花影','透光','P11','60',300,'V',3500),
+
+  F('淨白柔雪','透光','P12','40',240,'V',1500), F('淨白柔雪','透光','P12','40',300,'V',1800),
+  F('淨白柔雪','透光','P12','60',240,'V',1900), F('淨白柔雪','透光','P12','60',300,'V',2200),
+  F('淨白柔雪','透光','P12','80',300,'V',2700),
+
+  F('簡約條紋','透光','P13','40',240,'V',1900), F('簡約條紋','透光','P13','40',300,'V',2200),
+  F('簡約條紋','透光','P13','60',240,'V',2400), F('簡約條紋','透光','P13','60',300,'V',2600),
+  F('簡約條紋','透光','P13','80',300,'V',3500),
+
+  F('曲線白','透光','TW025','40',240,'V',1700), F('曲線白','透光','TW025','40',300,'V',2000),
+  F('曲線白','透光','TW025','60',240,'V',2200), F('曲線白','透光','TW025','60',300,'V',2500),
+  F('曲線白','透光','TW025','80',300,'V',3100),
+
+  F('慕白花','透光','TW026','40',240,'V',1700), F('慕白花','透光','TW026','40',300,'V',2000),
+  F('慕白花','透光','TW026','60',240,'V',2200), F('慕白花','透光','TW026','60',300,'V',2500),
+  F('慕白花','透光','TW026','80',300,'V',3100),
+
+  F('光環白','透光','TW027','40',240,'V',1900), F('光環白','透光','TW027','40',300,'V',2300),
+  F('光環白','透光','TW027','60',240,'V',2500), F('光環白','透光','TW027','60',300,'V',2800),
+  F('光環白','透光','TW027','80',300,'V',3600),
+
+  F('晨霧黑','透光','TW029','40',240,'V',1900), F('晨霧黑','透光','TW029','40',300,'V',2100),
+  F('晨霧黑','透光','TW029','60',240,'V',2200), F('晨霧黑','透光','TW029','60',300,'V',2600),
+  F('晨霧黑','透光','TW029','80',300,'V',3400),
+
+  F('墨霧灰','半透光','P20','40',240,'V',1800), F('墨霧灰','半透光','P20','40',300,'V',2000),
+  F('墨霧灰','半透光','P20','60',240,'V',2200), F('墨霧灰','半透光','P20','60',300,'V',2600),
+  F('墨霧灰','半透光','P20','80',300,'X',null),
+
+  F('單寧藍','半遮光','P21','40',240,'V',1600), F('單寧藍','半遮光','P21','40',300,'V',1800),
+  F('單寧藍','半遮光','P21','60',240,'V',2000), F('單寧藍','半遮光','P21','60',300,'V',2200),
+  F('單寧藍','半遮光','P21','80',300,'V',3100),
+
+  F('暮夜星軌','半遮光','P22','40',240,'V',1800), F('暮夜星軌','半遮光','P22','40',300,'V',2000),
+  F('暮夜星軌','半遮光','P22','60',240,'V',2200), F('暮夜星軌','半遮光','P22','60',300,'V',2400),
+  F('暮夜星軌','半遮光','P22','80',300,'V',3300),
+
+  F('摩卡時光','半遮光','P23','40',240,'V',1500), F('摩卡時光','半遮光','P23','40',300,'V',1700),
+  F('摩卡時光','半遮光','P23','60',240,'V',2000), F('摩卡時光','半遮光','P23','60',300,'V',2400),
+  F('摩卡時光','半遮光','P23','80',300,'X',null),
+
+  F('甜杏橙','半遮光','P24','40',240,'V',1500), F('甜杏橙','半遮光','P24','40',300,'V',1700),
+  F('甜杏橙','半遮光','P24','60',240,'V',2000), F('甜杏橙','半遮光','P24','60',300,'V',2400),
+  F('甜杏橙','半遮光','P24','80',300,'X',null),
+
+  F('白晝瑞雪','半遮光','P25','40',240,'V',1500), F('白晝瑞雪','半遮光','P25','40',300,'V',1700),
+  F('白晝瑞雪','半遮光','P25','60',240,'V',2000), F('白晝瑞雪','半遮光','P25','60',300,'V',2400),
+  F('白晝瑞雪','半遮光','P25','80',300,'V',3000),
+
+  F('晨霧銀雪','半遮光','P26','40',240,'V',1500), F('晨霧銀雪','半遮光','P26','40',300,'V',1700),
+  F('晨霧銀雪','半遮光','P26','60',240,'V',2000), F('晨霧銀雪','半遮光','P26','60',300,'V',2400),
+  F('晨霧銀雪','半遮光','P26','80',300,'V',3000),
+
+  F('橄欖灰','半遮光','P30','40',240,'V',1500), F('橄欖灰','半遮光','P30','40',300,'V',1700),
+  F('橄欖灰','半遮光','P30','60',240,'V',2000), F('橄欖灰','半遮光','P30','60',300,'V',2400),
+  F('橄欖灰','半遮光','P30','80',300,'V',3000),
+
+  F('霧淺灰','半遮光','P31','40',240,'V',1800), F('霧淺灰','半遮光','P31','40',300,'V',2200),
+  F('霧淺灰','半遮光','P31','60',240,'V',2400), F('霧淺灰','半遮光','P31','60',300,'V',2700),
+  F('霧淺灰','半遮光','P31','80',300,'V',3500),
+
+  F('霧深灰','半遮光','P32','40',240,'V',1800), F('霧深灰','半遮光','P32','40',300,'V',2200),
+  F('霧深灰','半遮光','P32','60',240,'V',2400), F('霧深灰','半遮光','P32','60',300,'V',2700),
+  F('霧深灰','半遮光','P32','80',300,'V',3500),
+
+  F('霧深紫','半遮光','P33','40',240,'V',1800), F('霧深紫','半遮光','P33','40',300,'V',2200),
+  F('霧深紫','半遮光','P33','60',240,'V',2400), F('霧深紫','半遮光','P33','60',300,'V',2700),
+  F('霧深紫','半遮光','P33','80',300,'V',3500),
+
+  F('霧灰黃','半遮光','P34','40',240,'V',1800), F('霧灰黃','半遮光','P34','40',300,'V',2200),
+  F('霧灰黃','半遮光','P34','60',240,'V',2400), F('霧灰黃','半遮光','P34','60',300,'V',2700),
+  F('霧灰黃','半遮光','P34','80',300,'V',3500),
+
+  F('亞麻棕','半遮光','P35','40',240,'V',1800), F('亞麻棕','半遮光','P35','40',300,'V',2200),
+  F('亞麻棕','半遮光','P35','60',240,'V',2400), F('亞麻棕','半遮光','P35','60',300,'V',2700),
+  F('亞麻棕','半遮光','P35','80',300,'V',3500),
+
+  F('淺灰牡丹','單面印刷','P36','40',240,'V',1500), F('淺灰牡丹','單面印刷','P36','40',300,'V',1800),
+  F('淺灰牡丹','單面印刷','P36','60',240,'V',2000), F('淺灰牡丹','單面印刷','P36','60',300,'V',2400),
+  F('淺灰牡丹','單面印刷','P36','80',300,'V',3100),
+
+  F('米黃牡丹','單面印刷','P37','40',240,'V',1500), F('米黃牡丹','單面印刷','P37','40',300,'V',1800),
+  F('米黃牡丹','單面印刷','P37','60',240,'V',2000), F('米黃牡丹','單面印刷','P37','60',300,'V',2400),
+  F('米黃牡丹','單面印刷','P37','80',300,'V',3100),
+
+  F('碎花灰','單面印刷','P38','40',240,'V',1500), F('碎花灰','單面印刷','P38','40',300,'V',1800),
+  F('碎花灰','單面印刷','P38','60',240,'V',2000), F('碎花灰','單面印刷','P38','60',300,'V',2400),
+  F('碎花灰','單面印刷','P38','80',300,'V',3100),
+
+  F('薔薇橘','單面印刷','P39','40',240,'V',1500), F('薔薇橘','單面印刷','P39','40',300,'V',1800),
+  F('薔薇橘','單面印刷','P39','60',240,'V',2000), F('薔薇橘','單面印刷','P39','60',300,'V',2400),
+  F('薔薇橘','單面印刷','P39','80',300,'V',3100),
+
+  F('薔薇灰','單面印刷','P40','40',240,'V',1500), F('薔薇灰','單面印刷','P40','40',300,'V',1800),
+  F('薔薇灰','單面印刷','P40','60',240,'V',2000), F('薔薇灰','單面印刷','P40','60',300,'V',2400),
+  F('薔薇灰','單面印刷','P40','80',300,'V',3100),
+
+  F('河景藍','單面印刷','P41','40',240,'V',1500), F('河景藍','單面印刷','P41','40',300,'V',1800),
+  F('河景藍','單面印刷','P41','60',240,'V',2000), F('河景藍','單面印刷','P41','60',300,'V',2400),
+  F('河景藍','單面印刷','P41','80',300,'V',3100),
+
+  F('藤蔓藍','單面印刷','P42','40',240,'V',1500), F('藤蔓藍','單面印刷','P42','40',300,'V',1800),
+  F('藤蔓藍','單面印刷','P42','60',240,'V',2000), F('藤蔓藍','單面印刷','P42','60',300,'V',2400),
+  F('藤蔓藍','單面印刷','P42','80',300,'V',3100),
+
+  F('璀璨香檳','透光','TW001','40',240,'V',1600), F('璀璨香檳','透光','TW001','40',300,'V',1800),
+  F('璀璨香檳','透光','TW001','60',240,'V',2000), F('璀璨香檳','透光','TW001','60',300,'V',2200),
+  F('璀璨香檳','透光','TW001','80',300,'X',null),
+
+  F('奶杏橙','半遮光','TW002','40',240,'V',1500), F('奶杏橙','半遮光','TW002','40',300,'V',1700),
+  F('奶杏橙','半遮光','TW002','60',240,'V',2000), F('奶杏橙','半遮光','TW002','60',300,'V',2400),
+  F('奶杏橙','半遮光','TW002','80',300,'X',null),
+
+  F('頁岩灰','半遮光','TW003','40',240,'X',null), F('頁岩灰','半遮光','TW003','40',300,'X',null),
+  F('頁岩灰','半遮光','TW003','60',240,'V',2000), F('頁岩灰','半遮光','TW003','60',300,'V',2400),
+  F('頁岩灰','半遮光','TW003','80',300,'X',null),
+
+  F('珍珠白','半遮光','TW004','40',240,'V',1600), F('珍珠白','半遮光','TW004','40',300,'V',1900),
+  F('珍珠白','半遮光','TW004','60',240,'V',2200), F('珍珠白','半遮光','TW004','60',300,'V',2400),
+  F('珍珠白','半遮光','TW004','80',300,'V',3200),
+
+  F('雪酪白','半遮光','TW005','40',240,'X',null), F('雪酪白','半遮光','TW005','40',300,'X',null),
+  F('雪酪白','半遮光','TW005','60',240,'V',2000), F('雪酪白','半遮光','TW005','60',300,'V',2400),
+  F('雪酪白','半遮光','TW005','80',300,'X',null),
+
+  F('純淨白橫紋','全遮光','TW010','40',240,'V',1800), F('純淨白橫紋','全遮光','TW010','40',300,'V',2100),
+  F('純淨白橫紋','全遮光','TW010','60',240,'V',2500), F('純淨白橫紋','全遮光','TW010','60',300,'V',2800),
+  F('純淨白橫紋','全遮光','TW010','80',300,'V',3900),
+
+  F('奶茶卡其','全遮光','TW011','40',240,'V',1800), F('奶茶卡其','全遮光','TW011','40',300,'V',2100),
+  F('奶茶卡其','全遮光','TW011','60',240,'V',2500), F('奶茶卡其','全遮光','TW011','60',300,'V',2800),
+  F('奶茶卡其','全遮光','TW011','80',300,'V',3900),
+
+  F('霧灰橫紋','全遮光','TW012','40',240,'V',1800), F('霧灰橫紋','全遮光','TW012','40',300,'V',2100),
+  F('霧灰橫紋','全遮光','TW012','60',240,'V',2500), F('霧灰橫紋','全遮光','TW012','60',300,'V',2800),
+  F('霧灰橫紋','全遮光','TW012','80',300,'V',3900),
+
+  F('香草編織','全遮光','TW013','40',240,'V',2300), F('香草編織','全遮光','TW013','40',300,'V',2700),
+  F('香草編織','全遮光','TW013','60',240,'V',3200), F('香草編織','全遮光','TW013','60',300,'V',3800),
+  F('香草編織','全遮光','TW013','80',300,'V',5200),
+
+  F('貝殼白編織','全遮光','TW014','40',240,'V',2300), F('貝殼白編織','全遮光','TW014','40',300,'V',2700),
+  F('貝殼白編織','全遮光','TW014','60',240,'V',3200), F('貝殼白編織','全遮光','TW014','60',300,'V',3800),
+  F('貝殼白編織','全遮光','TW014','80',300,'V',5200),
+
+  F('花崗棕編織','全遮光','TW015','40',240,'V',2300), F('花崗棕編織','全遮光','TW015','40',300,'V',2700),
+  F('花崗棕編織','全遮光','TW015','60',240,'V',3200), F('花崗棕編織','全遮光','TW015','60',300,'V',3800),
+  F('花崗棕編織','全遮光','TW015','80',300,'V',5200),
+
+  F('米黃編織','全遮光','TW016','40',240,'V',2200), F('米黃編織','全遮光','TW016','40',300,'V',2600),
+  F('米黃編織','全遮光','TW016','60',240,'V',3100), F('米黃編織','全遮光','TW016','60',300,'V',3600),
+  F('米黃編織','全遮光','TW016','80',300,'V',4900),
+
+  F('琥珀編織','全遮光','TW017','40',240,'V',2200), F('琥珀編織','全遮光','TW017','40',300,'V',2600),
+  F('琥珀編織','全遮光','TW017','60',240,'V',3100), F('琥珀編織','全遮光','TW017','60',300,'V',3600),
+  F('琥珀編織','全遮光','TW017','80',300,'V',4900),
+
+  F('木紋編織','全遮光','TW018','40',240,'V',2200), F('木紋編織','全遮光','TW018','40',300,'V',2600),
+  F('木紋編織','全遮光','TW018','60',240,'V',3100), F('木紋編織','全遮光','TW018','60',300,'V',3600),
+  F('木紋編織','全遮光','TW018','80',300,'V',4900),
+
+  F('黑灰編織','全遮光','TW019','40',240,'V',2200), F('黑灰編織','全遮光','TW019','40',300,'V',2600),
+  F('黑灰編織','全遮光','TW019','60',240,'V',3100), F('黑灰編織','全遮光','TW019','60',300,'V',3600),
+  F('黑灰編織','全遮光','TW019','80',300,'V',4900),
+
+  F('奶白梧桐','遮光+防焰','TW020','40',240,'V',2200), F('奶白梧桐','遮光+防焰','TW020','40',300,'V',2700),
+  F('奶白梧桐','遮光+防焰','TW020','60',240,'V',3200), F('奶白梧桐','遮光+防焰','TW020','60',300,'V',3800),
+  F('奶白梧桐','遮光+防焰','TW020','80',300,'V',5100),
+
+  F('暮月白','透光+防焰','TW030','40',240,'V',2000), F('暮月白','透光+防焰','TW030','40',300,'V',2300),
+  F('暮月白','透光+防焰','TW030','60',240,'V',2500), F('暮月白','透光+防焰','TW030','60',300,'V',3000),
+  F('暮月白','透光+防焰','TW030','80',300,'V',3800),
+
+  F('日暮橙','透光+防焰','TW032','40',240,'V',2000), F('日暮橙','透光+防焰','TW032','40',300,'V',2300),
+  F('日暮橙','透光+防焰','TW032','60',240,'V',2500), F('日暮橙','透光+防焰','TW032','60',300,'V',3000),
+  F('日暮橙','透光+防焰','TW032','80',300,'V',3800),
+
+  F('薄暮灰','透光+防焰','TW033','40',240,'V',2000), F('薄暮灰','透光+防焰','TW033','40',300,'V',2300),
+  F('薄暮灰','透光+防焰','TW033','60',240,'V',2500), F('薄暮灰','透光+防焰','TW033','60',300,'V',3000),
+  F('薄暮灰','透光+防焰','TW033','80',300,'V',3800),
+
+  F('炭晶黑','透光+防焰','TW034','40',240,'V',2400), F('炭晶黑','透光+防焰','TW034','40',300,'V',2800),
+  F('炭晶黑','透光+防焰','TW034','60',240,'V',3200), F('炭晶黑','透光+防焰','TW034','60',300,'V',3600),
+  F('炭晶黑','透光+防焰','TW034','80',300,'V',4500),
+
+  F('冰晶灰','透光+防焰','TW035','40',240,'V',2400), F('冰晶灰','透光+防焰','TW035','40',300,'V',2800),
+  F('冰晶灰','透光+防焰','TW035','60',240,'V',3200), F('冰晶灰','透光+防焰','TW035','60',300,'V',3600),
+  F('冰晶灰','透光+防焰','TW035','80',300,'V',4500),
+
+  F('胡桃褐','透光+防焰','TW036','40',240,'V',2100), F('胡桃褐','透光+防焰','TW036','40',300,'V',2400),
+  F('胡桃褐','透光+防焰','TW036','60',240,'V',2700), F('胡桃褐','透光+防焰','TW036','60',300,'V',3100),
+  F('胡桃褐','透光+防焰','TW036','80',300,'V',4100),
+
+  F('原木咖','透光+防焰','TW037','40',240,'V',2100), F('原木咖','透光+防焰','TW037','40',300,'V',2400),
+  F('原木咖','透光+防焰','TW037','60',240,'V',2700), F('原木咖','透光+防焰','TW037','60',300,'V',3100),
+  F('原木咖','透光+防焰','TW037','80',300,'V',4100),
+
+  F('頁岩黑','透光+防焰','TW038','40',240,'V',2100), F('頁岩黑','透光+防焰','TW038','40',300,'V',2400),
+  F('頁岩黑','透光+防焰','TW038','60',240,'V',2700), F('頁岩黑','透光+防焰','TW038','60',300,'V',3100),
+  F('頁岩黑','透光+防焰','TW038','80',300,'V',4100),
+
+  F('石英白','透光+防焰','TW039','40',240,'V',2100), F('石英白','透光+防焰','TW039','40',300,'V',2400),
+  F('石英白','透光+防焰','TW039','60',240,'V',2700), F('石英白','透光+防焰','TW039','60',300,'V',3100),
+  F('石英白','透光+防焰','TW039','80',300,'V',4100),
+
+  F('皓石灰','透光+防焰','TW040','40',240,'V',2100), F('皓石灰','透光+防焰','TW040','40',300,'V',2400),
+  F('皓石灰','透光+防焰','TW040','60',240,'V',2700), F('皓石灰','透光+防焰','TW040','60',300,'V',3100),
+  F('皓石灰','透光+防焰','TW040','80',300,'V',4100),
+
+  F('鈦灰色','透光+防焰','TW041','40',240,'V',2100), F('鈦灰色','透光+防焰','TW041','40',300,'V',2500),
+  F('鈦灰色','透光+防焰','TW041','60',240,'V',2800), F('鈦灰色','透光+防焰','TW041','60',300,'V',3300),
+  F('鈦灰色','透光+防焰','TW041','80',300,'V',4200),
+
+  F('白釉色','透光+防焰','TW042','40',240,'V',2100), F('白釉色','透光+防焰','TW042','40',300,'V',2500),
+  F('白釉色','透光+防焰','TW042','60',240,'V',2800), F('白釉色','透光+防焰','TW042','60',300,'V',3300),
+  F('白釉色','透光+防焰','TW042','80',300,'V',4200),
+
+  F('砂灰色','透光+防焰','TW043','40',240,'V',2100), F('砂灰色','透光+防焰','TW043','40',300,'V',2500),
+  F('砂灰色','透光+防焰','TW043','60',240,'V',2800), F('砂灰色','透光+防焰','TW043','60',300,'V',3300),
+  F('砂灰色','透光+防焰','TW043','80',300,'V',4200),
+];
+
+const INSTALL_FEE = 3600;
+const EXTRA_TRACK_FEE = 2000; // 單組軌道片數 >= 8
+const EXTRA_WINDOW_FEE = 1500; // 第2組窗起，每窗
+const NO_ELEVATOR_FEE = 500;
+const TAX_RATE = 1.05;
+
+/* ============ 狀態 ============ */
+let windows = [];
+let windowSeq = 0;
+let styleSeq = 0;
+
+function newWindow(){
+  windowSeq++;
+  return {
+    id: windowSeq,
+    series: '',
+    width: '',
+    height: '',
+    styles: [ newStyleRow() ]
+  };
+}
+function newStyleRow(){
+  styleSeq++;
+  return { id: styleSeq, fabricKey: '', qty: '' };
+}
+
+function addWindow(){
+  windows.push(newWindow());
+  render();
+}
+function removeWindow(id){
+  windows = windows.filter(w => w.id !== id);
+  render();
+}
+function addStyleRow(winId){
+  const w = windows.find(w => w.id === winId);
+  w.styles.push(newStyleRow());
+  render();
+}
+function removeStyleRow(winId, styleId){
+  const w = windows.find(w => w.id === winId);
+  w.styles = w.styles.filter(s => s.id !== styleId);
+  if (w.styles.length === 0) w.styles.push(newStyleRow());
+  render();
+}
+
+/* ============ 計算邏輯 ============ */
+
+// 高度 → 級距 (240 / 300 / null=超過)
+function heightTier(h){
+  if (h === '' || h === null || isNaN(h)) return null;
+  if (h <= 240) return 240;
+  if (h <= 300) return 300;
+  return 'over';
+}
+
+// 找軌道規格：同系列中，遮蔽寬度區間涵蓋輸入寬度，取片數最少者
+function matchTrack(series, width){
+  if (!series || !width) return null;
+  const candidates = TRACKS.filter(t => t.series === series && width >= t.minW && width <= t.maxW);
+  if (candidates.length === 0) return null;
+  candidates.sort((a,b) => a.pieces - b.pieces);
+  return candidates[0];
+}
+
+function fabricsFor(series, tier){
+  if (!series || !tier || tier === 'over') return [];
+  return FABRICS.filter(f => f.series === series && f.tier === tier);
+}
+
+function fabricLabel(f){
+  const priceTxt = f.avail === 'X' ? '無此款' : ('$' + f.price.toLocaleString());
+  return `${f.name}（${f.type} / ${f.code}） ${priceTxt}`;
+}
+
+/* ============ 渲染 ============ */
+
+function render(){
+  renderWindows();
+  renderSummary();
+}
+
+function renderWindows(){
+  const c = document.getElementById('windowsContainer');
+  c.innerHTML = '';
+  windows.forEach((w, idx) => {
+    const div = document.createElement('div');
+    div.className = 'window-card';
+
+    const tier = heightTier(parseFloat(w.height));
+    const track = matchTrack(w.series, parseFloat(w.width));
+    const avail = fabricsFor(w.series, tier);
+
+    let matchHtml = '';
+    if (!w.series) {
+      matchHtml = `<div class="match-box">請先選擇單片寬幅</div>`;
+    } else if (w.width === '' || w.height === '') {
+      matchHtml = `<div class="match-box">請輸入寬度與高度</div>`;
+    } else if (tier === 'over') {
+      matchHtml = `<div class="match-box warn">高度超過300cm，需人工評估報價（可能需加裝支架）</div>`;
+    } else if (!track) {
+      matchHtml = `<div class="match-box warn">此寬幅系列找不到涵蓋此寬度的軌道規格，請人工報價</div>`;
+    } else {
+      matchHtml = `<div class="match-box">
+        比對規格：<b>${w.series}系列 ${track.pieces}片</b>（遮蔽寬度 ${track.minW}-${track.maxW}cm）
+        ／軌道未稅價 <b>$${track.price.toLocaleString()}</b>
+        ${track.pieces >= 8 ? '<br>※ 此組片數≥8，加收軌道安裝費 $2,000' : ''}
+      </div>`;
+    }
+
+    const stylesHtml = w.styles.map(s => {
+      const options = avail.map(f => {
+        const key = `${f.name}|${f.code}`;
+        const disabled = f.avail === 'X' ? 'disabled' : '';
+        const selected = s.fabricKey === key ? 'selected' : '';
+        return `<option value="${key}" ${disabled} ${selected}>${fabricLabel(f)}</option>`;
+      }).join('');
+
+      const chosen = avail.find(f => `${f.name}|${f.code}` === s.fabricKey);
+      const lineTotal = (chosen && chosen.avail === 'V' && s.qty) ? chosen.price * Number(s.qty) : 0;
+
+      return `
+        <div class="style-row">
+          <div class="field">
+            <label>款式</label>
+            <select onchange="updateStyle(${w.id},${s.id},'fabricKey',this.value)" ${avail.length===0?'disabled':''}>
+              <option value="">－ 請選擇款式 －</option>
+              ${options}
+            </select>
+          </div>
+          <div class="field qty">
+            <label>片數</label>
+            <input type="number" min="0" value="${s.qty}" placeholder="片數"
+              onchange="updateStyle(${w.id},${s.id},'qty',this.value)">
+          </div>
+          <div class="price-tag">${lineTotal ? '$'+lineTotal.toLocaleString() : ''}</div>
+          <button class="danger" onclick="removeStyleRow(${w.id},${s.id})">移除</button>
+        </div>`;
+    }).join('');
+
+    div.innerHTML = `
+      <div class="window-head">
+        <div class="window-title">窗 ${idx+1}${idx>0 ? '（第 '+(idx+1)+' 組軌道 +$1,500）' : ''}</div>
+        ${windows.length > 1 ? `<button class="danger" onclick="removeWindow(${w.id})">刪除此窗</button>` : ''}
+      </div>
+
+      <div class="row">
+        <div class="field" style="flex:1.4;">
+          <label>單片寬幅</label>
+          <div class="seg">
+            ${['40','60','80'].map(v => `
+              <label>
+                <input type="radio" name="series-${w.id}" value="${v}" ${w.series===v?'checked':''}
+                  onchange="updateWindow(${w.id},'series','${v}')">
+                <span>${v}寬</span>
+              </label>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>遮蔽寬度 (cm)</label>
+          <input type="number" value="${w.width}" placeholder="例如 266"
+            onchange="updateWindow(${w.id},'width',this.value)">
+        </div>
+        <div class="field">
+          <label>窗戶高度 (cm)</label>
+          <input type="number" value="${w.height}" placeholder="例如 260"
+            onchange="updateWindow(${w.id},'height',this.value)">
+        </div>
+      </div>
+
+      ${matchHtml}
+
+      <div style="margin-top:16px;">
+        <label style="margin-bottom:10px;">款式選擇（可混搭多款，片數不需等於軌道總片數）</label>
+        ${stylesHtml}
+        <button class="ghost add-style-btn" onclick="addStyleRow(${w.id})">＋ 新增一款布</button>
+      </div>
+    `;
+    c.appendChild(div);
+  });
+}
+
+function updateWindow(id, key, val){
+  const w = windows.find(w => w.id === id);
+  w[key] = (key === 'width' || key === 'height') ? val : val;
+  render();
+}
+function updateStyle(winId, styleId, key, val){
+  const w = windows.find(w => w.id === winId);
+  const s = w.styles.find(s => s.id === styleId);
+  s[key] = val;
+  render();
+}
+
+/* ============ 計算總價與明細文字 ============ */
+
+function computeAll(){
+  let trackSubtotal = 0;
+  let fabricSubtotal = 0;
+  let extraTrackFeeTotal = 0;
+  let windowLines = [];
+  let hasError = false;
+  let validWindowCount = 0;
+
+  windows.forEach((w, idx) => {
+    const tier = heightTier(parseFloat(w.height));
+    const track = matchTrack(w.series, parseFloat(w.width));
+    if (!w.series || w.width==='' || w.height==='' || tier==='over' || !track){
+      hasError = true;
+      return;
+    }
+    validWindowCount++;
+    trackSubtotal += track.price;
+    if (track.pieces >= 8) extraTrackFeeTotal += EXTRA_TRACK_FEE;
+
+    let styleLines = [];
+    w.styles.forEach(s => {
+      const avail = fabricsFor(w.series, tier);
+      const chosen = avail.find(f => `${f.name}|${f.code}` === s.fabricKey);
+      if (chosen && chosen.avail === 'V' && s.qty && Number(s.qty) > 0){
+        const lineTotal = chosen.price * Number(s.qty);
+        fabricSubtotal += lineTotal;
+        styleLines.push(`　${chosen.name}（${chosen.code}） x ${s.qty}片　$${lineTotal.toLocaleString()}`);
+      }
+    });
+
+    windowLines.push({
+      idx: idx+1,
+      series: w.series,
+      width: w.width,
+      height: w.height,
+      trackSpec: `${w.series}系列 ${track.pieces}片（${track.minW}-${track.maxW}cm）`,
+      trackPrice: track.price,
+      extraTrack: track.pieces >= 8,
+      styleLines
+    });
+  });
+
+  const extraWindowFeeTotal = validWindowCount > 1 ? (validWindowCount - 1) * EXTRA_WINDOW_FEE : 0;
+  const noElevator = document.getElementById('noElevator').checked;
+  const elevatorFee = noElevator ? NO_ELEVATOR_FEE : 0;
+
+  const preTax = trackSubtotal + fabricSubtotal + INSTALL_FEE + extraTrackFeeTotal + extraWindowFeeTotal + elevatorFee;
+  const total = Math.round(preTax * TAX_RATE);
+
+  return {
+    hasError, validWindowCount, windowLines,
+    trackSubtotal, fabricSubtotal, extraTrackFeeTotal, extraWindowFeeTotal,
+    elevatorFee, installFee: INSTALL_FEE, preTax, total
+  };
+}
+
+function renderSummary(){
+  const r = computeAll();
+  const box = document.getElementById('summaryBox');
+  const out = document.getElementById('outputText');
+
+  if (r.validWindowCount === 0){
+    box.innerHTML = '<div class="note">尚未有完整的窗戶資料</div>';
+    out.textContent = '尚未輸入任何窗戶資料';
+    out.classList.add('empty');
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="summary-line"><span class="lbl">軌道小計（${r.validWindowCount}組）</span><span>$${r.trackSubtotal.toLocaleString()}</span></div>
+    <div class="summary-line"><span class="lbl">布料小計</span><span>$${r.fabricSubtotal.toLocaleString()}</span></div>
+    <div class="summary-line"><span class="lbl">安裝費</span><span>$${r.installFee.toLocaleString()}</span></div>
+    ${r.extraTrackFeeTotal ? `<div class="summary-line"><span class="lbl">軌道片數≥8 加收</span><span>$${r.extraTrackFeeTotal.toLocaleString()}</span></div>` : ''}
+    ${r.extraWindowFeeTotal ? `<div class="summary-line"><span class="lbl">多窗加收（第2組起 x $1,500）</span><span>$${r.extraWindowFeeTotal.toLocaleString()}</span></div>` : ''}
+    ${r.elevatorFee ? `<div class="summary-line"><span class="lbl">無電梯加收</span><span>$${r.elevatorFee.toLocaleString()}</span></div>` : ''}
+    <div class="summary-line"><span class="lbl">未稅合計</span><span>$${r.preTax.toLocaleString()}</span></div>
+    <div class="summary-line total"><span class="lbl">含稅總價 (×1.05)</span><span>$${r.total.toLocaleString()}</span></div>
+    ${r.hasError ? '<div class="note" style="color:var(--warn);">＊有窗戶資料尚未完整或超出規格範圍，未列入計算</div>' : ''}
+  `;
+
+  let text = `捷安片簾 到府安裝報價\n\n`;
+  r.windowLines.forEach(wl => {
+    text += `【窗${wl.idx}】W${wl.width} x H${wl.height} cm\n`;
+    text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '（含片數加收）' : ''}\n`;
+    if (wl.styleLines.length){
+      text += wl.styleLines.join('\n') + '\n';
+    } else {
+      text += `　（尚未選擇布款）\n`;
+    }
+    text += `\n`;
+  });
+  text += `安裝費：$${r.installFee.toLocaleString()}\n`;
+  if (r.extraTrackFeeTotal) text += `軌道片數≥8加收：$${r.extraTrackFeeTotal.toLocaleString()}\n`;
+  if (r.extraWindowFeeTotal) text += `多窗加收：$${r.extraWindowFeeTotal.toLocaleString()}\n`;
+  if (r.elevatorFee) text += `無電梯加收：$${r.elevatorFee.toLocaleString()}\n`;
+  text += `\n未稅合計：$${r.preTax.toLocaleString()}\n`;
+  text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05）\n`;
+  text += `\n＊實際報價以現場丈量與最終確認款式為準`;
+
+  out.textContent = text;
+  out.classList.remove('empty');
+}
+
+function copyOutput(){
+  const out = document.getElementById('outputText');
+  if (out.classList.contains('empty')) return;
+  navigator.clipboard.writeText(out.textContent).then(() => {
+    const btn = document.getElementById('copyBtn');
+    const original = btn.textContent;
+    btn.textContent = '已複製 ✓';
+    setTimeout(() => { btn.textContent = original; }, 1800);
+  });
+}
+
+/* ============ 初始化 ============ */
+windows.push(newWindow());
+render();
+</script>
+
+</body>
+</html>
