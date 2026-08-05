@@ -124,18 +124,10 @@
   .match-box.warn{ background:#fbf0ee; border-color:#d8beb8; color:var(--warn); }
   .match-box b{ color:var(--brass-dark); }
 
-  .style-block{
-    margin-top:10px; padding-top:10px; border-top:1px solid #eee8db;
-  }
-  .style-block:first-of-type{ border-top:none; margin-top:0; padding-top:0; }
-  .search-input{
-    width:100%; padding:8px 10px; border:1px solid #cfc7b2; border-radius:5px;
-    font-size:13.5px; background:#fffdf9; color:var(--ink); margin-bottom:8px;
-  }
-  .search-input:focus{ outline:none; border-color:var(--brass); }
   .style-row{
-    display:flex; gap:10px; align-items:flex-end;
+    display:flex; gap:10px; align-items:flex-end; margin-top:10px; padding-top:10px; border-top:1px solid #eee8db;
   }
+  .style-row:first-of-type{ border-top:none; margin-top:0; padding-top:0; }
   .style-row .field{ flex:3; }
   .style-row .field.qty{ flex:1; min-width:70px; }
   .style-row .price-tag{
@@ -207,7 +199,7 @@
       <label for="noElevator" style="margin:0;">無電梯（整單 +500）</label>
     </div>
     <div class="note" id="serviceNote">
-      安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。
+      安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。若貴公司規則是每窗都要收安裝費，請告訴我，我再改邏輯。
     </div>
   </div>
 
@@ -511,7 +503,7 @@ function newWindow(){
 }
 function newStyleRow(){
   styleSeq++;
-  return { id: styleSeq, fabricKey: '', qty: '', search: '' };
+  return { id: styleSeq, fabricKey: '', qty: '' };
 }
 
 function addWindow(){
@@ -579,25 +571,9 @@ function fabricLabel(f){
 /* ============ 渲染 ============ */
 
 function render(){
-  // 重繪前先記住目前聚焦的輸入框（例如搜尋框），避免打字打到一半游標跳掉
-  const active = document.activeElement;
-  const activeId = (active && active.id) ? active.id : null;
-  const selStart = (active && typeof active.selectionStart === 'number') ? active.selectionStart : null;
-  const selEnd = (active && typeof active.selectionEnd === 'number') ? active.selectionEnd : null;
-
   updateServiceCard();
   renderWindows();
   renderSummary();
-
-  if (activeId){
-    const el = document.getElementById(activeId);
-    if (el){
-      el.focus();
-      if (selStart !== null && el.setSelectionRange){
-        try { el.setSelectionRange(selStart, selEnd); } catch(e){}
-      }
-    }
-  }
 }
 
 function updateServiceCard(){
@@ -608,7 +584,7 @@ function updateServiceCard(){
     note.textContent = 'DIY 模式：不收安裝費、軌道片數加收、多窗加收、無電梯加價，改以每組軌道 $300 估算運費（未稅）。';
   } else {
     elevatorRow.style.display = 'flex';
-    note.textContent = '安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。';
+    note.textContent = '安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。若貴公司規則是每窗都要收安裝費，請告訴我，我再改邏輯。';
   }
 }
 
@@ -663,51 +639,32 @@ function renderWindows(){
     }
 
     const stylesHtml = w.styles.map(s => {
-      const term = (s.search || '').trim().toLowerCase();
-      const filtered = term
-        ? avail.filter(f => f.code.toLowerCase().includes(term) || f.name.toLowerCase().includes(term) || f.type.toLowerCase().includes(term))
-        : avail;
-
-      const options = filtered.map(f => {
+      const options = avail.map(f => {
         const key = `${f.name}|${f.code}`;
         const disabled = f.avail === 'X' ? 'disabled' : '';
         const selected = s.fabricKey === key ? 'selected' : '';
         return `<option value="${key}" ${disabled} ${selected}>${fabricLabel(f)}</option>`;
       }).join('');
 
-      // 若目前已選的款式被篩選條件排除，仍要保留在選單中，避免選取狀態消失
       const chosen = avail.find(f => `${f.name}|${f.code}` === s.fabricKey);
-      const chosenStillShown = chosen && filtered.includes(chosen);
-      const keepSelectedOption = (chosen && !chosenStillShown)
-        ? `<option value="${chosen.name}|${chosen.code}" selected>${fabricLabel(chosen)}（目前已選，篩選條件外）</option>`
-        : '';
-
       const lineTotal = (chosen && chosen.avail === 'V' && s.qty) ? chosen.price * Number(s.qty) : 0;
-      const noMatch = term && filtered.length === 0;
 
       return `
-        <div class="style-block">
-          <input type="text" class="search-input" id="search-${w.id}-${s.id}" placeholder="搜尋布號或名稱，例如 P13"
-            value="${s.search || ''}"
-            oninput="updateStyle(${w.id},${s.id},'search',this.value)">
-          <div class="style-row">
-            <div class="field">
-              <label>款式${term ? `（篩選中：${filtered.length} 項符合）` : ''}</label>
-              <select onchange="updateStyle(${w.id},${s.id},'fabricKey',this.value)" ${avail.length===0?'disabled':''}>
-                <option value="">－ 請選擇款式 －</option>
-                ${keepSelectedOption}
-                ${options}
-              </select>
-              ${noMatch ? '<div class="note" style="color:var(--warn);margin-top:4px;">找不到符合的布號／名稱</div>' : ''}
-            </div>
-            <div class="field qty">
-              <label>片數</label>
-              <input type="number" min="0" value="${s.qty}" placeholder="片數"
-                onchange="updateStyle(${w.id},${s.id},'qty',this.value)">
-            </div>
-            <div class="price-tag">${lineTotal ? '$'+lineTotal.toLocaleString() : ''}</div>
-            <button class="danger" onclick="removeStyleRow(${w.id},${s.id})">移除</button>
+        <div class="style-row">
+          <div class="field">
+            <label>款式</label>
+            <select onchange="updateStyle(${w.id},${s.id},'fabricKey',this.value)" ${avail.length===0?'disabled':''}>
+              <option value="">－ 請選擇款式 －</option>
+              ${options}
+            </select>
           </div>
+          <div class="field qty">
+            <label>片數</label>
+            <input type="number" min="0" value="${s.qty}" placeholder="片數"
+              onchange="updateStyle(${w.id},${s.id},'qty',this.value)">
+          </div>
+          <div class="price-tag">${lineTotal ? '$'+lineTotal.toLocaleString() : ''}</div>
+          <button class="danger" onclick="removeStyleRow(${w.id},${s.id})">移除</button>
         </div>`;
     }).join('');
 
@@ -828,8 +785,7 @@ function computeAll(){
   }
 
   const preTax = trackSubtotal + fabricSubtotal + installFee + extraTrackFeeTotal + extraWindowFeeTotal + elevatorFee + shippingFeeTotal;
-  // 含稅總價：無條件進位到千位（例如 38220 → 39000）
-  const total = Math.ceil((preTax * TAX_RATE) / 1000) * 1000;
+  const total = Math.round(preTax * TAX_RATE);
 
   return {
     hasError, validWindowCount, windowLines,
@@ -862,7 +818,7 @@ function renderSummary(){
       <div class="summary-line"><span class="lbl">運費（DIY，每組 $300 x ${r.validWindowCount}）</span><span>$${r.shippingFeeTotal.toLocaleString()}</span></div>
     `}
     <div class="summary-line"><span class="lbl">未稅合計</span><span>$${r.preTax.toLocaleString()}</span></div>
-    <div class="summary-line total"><span class="lbl">含稅總價（進位至千元）</span><span>$${r.total.toLocaleString()}</span></div>
+    <div class="summary-line total"><span class="lbl">含稅總價 (×1.05)</span><span>$${r.total.toLocaleString()}</span></div>
     ${r.hasError ? '<div class="note" style="color:var(--warn);">＊有資料尚未完整或超出規格範圍，未列入計算</div>' : ''}
   `;
 
@@ -888,7 +844,7 @@ function renderSummary(){
   }
 
   text += `\n未稅合計：$${r.preTax.toLocaleString()}\n`;
-  text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05，進位至千元）\n`;
+  text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05）\n`;
   text += `\n＊實際報價以現場丈量與最終確認款式後，業務估價為準${serviceMode === 'diy' ? '（DIY 運費為估算，實際依配送地區與件數計算）' : '（尚未計算降高度、輕鋼架補強）'}`;
 
   out.textContent = text;
