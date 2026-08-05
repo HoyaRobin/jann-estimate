@@ -785,7 +785,8 @@ function computeAll(){
   }
 
   const preTax = trackSubtotal + fabricSubtotal + installFee + extraTrackFeeTotal + extraWindowFeeTotal + elevatorFee + shippingFeeTotal;
-  const total = Math.round(preTax * TAX_RATE);
+  // 含稅總價：無條件進位到千位（例如 38220 → 39000）
+  const total = Math.ceil((preTax * TAX_RATE) / 1000) * 1000;
 
   return {
     hasError, validWindowCount, windowLines,
@@ -818,14 +819,14 @@ function renderSummary(){
       <div class="summary-line"><span class="lbl">運費（DIY，每組 $300 x ${r.validWindowCount}）</span><span>$${r.shippingFeeTotal.toLocaleString()}</span></div>
     `}
     <div class="summary-line"><span class="lbl">未稅合計</span><span>$${r.preTax.toLocaleString()}</span></div>
-    <div class="summary-line total"><span class="lbl">含稅總價 (×1.05)</span><span>$${r.total.toLocaleString()}</span></div>
+    <div class="summary-line total"><span class="lbl">含稅總價（進位至千元）</span><span>$${r.total.toLocaleString()}</span></div>
     ${r.hasError ? '<div class="note" style="color:var(--warn);">＊有資料尚未完整或超出規格範圍，未列入計算</div>' : ''}
   `;
 
   let text = `捷安片簾 ${serviceMode === 'install' ? '到府安裝' : 'DIY自取／宅配'}報價\n\n`;
   r.windowLines.forEach(wl => {
     text += `【窗${wl.idx}】W${wl.width} x H${wl.height} cm\n`;
-    text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '（含片數加收）' : ''}\n`;
+    text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '' : ''}\n`;
     if (wl.styleLines.length){
       text += wl.styleLines.join('\n') + '\n';
     } else {
@@ -844,7 +845,7 @@ function renderSummary(){
   }
 
   text += `\n未稅合計：$${r.preTax.toLocaleString()}\n`;
-  text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05）\n`;
+  text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05，進位至千元）\n`;
   text += `\n＊實際報價以現場丈量與最終確認款式後，業務估價為準${serviceMode === 'diy' ? '（DIY 運費為估算，實際依配送地區與件數計算）' : '（尚未計算降高度、輕鋼架補強）'}`;
 
   out.textContent = text;
