@@ -197,7 +197,7 @@
   <div class="card">
     <h2>報價明細</h2>
     <div id="summaryBox"></div>
-    <div class="output empty" id="outputText">尚未輸入任何窗戶資料</div>
+    <div class="output empty" id="outputText">尚未輸入任何資料</div>
     <div class="btn-row right">
       <button class="ghost" id="copyBtn" onclick="copyOutput()">複製報價文字</button>
     </div>
@@ -628,7 +628,7 @@ function renderWindows(){
             onchange="updateWindow(${w.id},'width',this.value)">
         </div>
         <div class="field">
-          <label>窗戶高度 (cm)</label>
+          <label>遮蔽高度 (cm)</label>
           <input type="number" value="${w.height}" placeholder="例如 260"
             onchange="updateWindow(${w.id},'height',this.value)">
         </div>
@@ -722,8 +722,8 @@ function renderSummary(){
   const out = document.getElementById('outputText');
 
   if (r.validWindowCount === 0){
-    box.innerHTML = '<div class="note">尚未有完整的窗戶資料</div>';
-    out.textContent = '尚未輸入任何窗戶資料';
+    box.innerHTML = '<div class="note">尚未有完整的資料</div>';
+    out.textContent = '尚未輸入任何資料';
     out.classList.add('empty');
     return;
   }
@@ -737,7 +737,7 @@ function renderSummary(){
     ${r.elevatorFee ? `<div class="summary-line"><span class="lbl">無電梯加收</span><span>$${r.elevatorFee.toLocaleString()}</span></div>` : ''}
     <div class="summary-line"><span class="lbl">未稅合計</span><span>$${r.preTax.toLocaleString()}</span></div>
     <div class="summary-line total"><span class="lbl">含稅總價 (×1.05)</span><span>$${r.total.toLocaleString()}</span></div>
-    ${r.hasError ? '<div class="note" style="color:var(--warn);">＊有窗戶資料尚未完整或超出規格範圍，未列入計算</div>' : ''}
+    ${r.hasError ? '<div class="note" style="color:var(--warn);">＊有資料尚未完整或超出規格範圍，未列入計算</div>' : ''}
   `;
 
   let text = `捷安片簾 到府安裝報價\n\n`;
