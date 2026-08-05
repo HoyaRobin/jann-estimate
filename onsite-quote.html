@@ -757,7 +757,7 @@ function renderSummary(){
   if (r.elevatorFee) text += `無電梯加收：$${r.elevatorFee.toLocaleString()}\n`;
   text += `\n未稅合計：$${r.preTax.toLocaleString()}\n`;
   text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05）\n`;
-  text += `\n＊實際報價以現場丈量與最終確認款式為準`;
+  text += `\n＊實際報價以現場丈量與最終確認款式後，業務估價為準，（尚未計算降高度、輕鋼架補強）;
 
   out.textContent = text;
   out.classList.remove('empty');
