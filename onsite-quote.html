@@ -188,6 +188,14 @@
   .combo-item-price{ font-weight:700; color:var(--brass-dark); flex:0 0 auto; min-width:64px; text-align:right; }
   .combo-item.disabled .combo-item-price{ color:var(--warn); }
   .combo-empty{ padding:12px; font-size:13px; color:var(--sub2); text-align:center; }
+
+  .promo-savings{
+    margin-top:10px; padding:12px 14px; background:#fbf0ee; border:1px solid #eac9c2; border-radius:6px;
+    font-size:20px; font-weight:800; color:var(--warn); text-align:center;
+  }
+  .promo-savings-note{
+    display:block; font-size:12.5px; font-weight:500; color:var(--warn); margin-top:2px;
+  }
 </style>
 </head>
 <body>
@@ -195,12 +203,9 @@
 <div class="header">
   <div class="slats"></div>
   <div class="header-inner">
-    <div class="eyebrow">內部工具 · 橘子班 · 接待快報</div>
-
-    <h1>參觀估價試算　（僅供同學內用）</h1>
-    <div class="sub">※※※未含降高及加固等特殊計算；依片幅／款式／片數，含安裝與加價項目，未稅金額自動加稅 5%</div>
-
-
+    <div class="eyebrow">內部工具 · 橘子班 · 門市到府報價</div>
+    <h1>參觀貴賓　到府安裝試算　僅供同學內用</h1>
+    <div class="sub">依片幅／款式／片數精算，含安裝與加價項目，未稅金額自動加稅 5%</div>
   </div>
 </div>
 
@@ -954,7 +959,7 @@ function renderPromoCompare(){
   const rOn = computeAll(true);
 
   if (rOff.promoItemCount === 0){
-    box.innerHTML = `<div class="note">目前尚未選到活動適用布款，沒有价差可比較。</div>`;
+    box.innerHTML = `<div class="note">目前尚未選到活動適用布款，沒有價差可比較。</div>`;
     return;
   }
 
@@ -962,12 +967,15 @@ function renderPromoCompare(){
   const totalDiff = rOff.total - rOn.total;
 
   box.innerHTML = `
-    <div class="summary-line"><span class="lbl">活動布款原价小計</span><span>$${rOff.promoOriginalSubtotal.toLocaleString()}</span></div>
+    <div class="summary-line"><span class="lbl">活動布款原價小計</span><span>$${rOff.promoOriginalSubtotal.toLocaleString()}</span></div>
     <div class="summary-line"><span class="lbl">活動布款75折後小計</span><span>$${rOff.promoDiscountedSubtotal.toLocaleString()}</span></div>
-    <div class="summary-line"><span class="lbl">布片价差</span><span>-$${fabricDiff.toLocaleString()}</span></div>
+    <div class="summary-line"><span class="lbl">布片價差</span><span>-$${fabricDiff.toLocaleString()}</span></div>
     <div class="summary-line"><span class="lbl">未套用活動　含稅總價</span><span>$${rOff.total.toLocaleString()}</span></div>
     <div class="summary-line total"><span class="lbl">套用活動後　含稅總價</span><span>$${rOn.total.toLocaleString()}</span></div>
-    <div class="note" style="margin-top:6px;">整單价差：省 $${totalDiff.toLocaleString()}（依千位進位後計算的實際差額，僅供參考）</div>
+    <div class="promo-savings">
+      整單價差：省 $${totalDiff.toLocaleString()}
+      <span class="promo-savings-note">（粗估費用，僅供參考）</span>
+    </div>
   `;
 }
 
