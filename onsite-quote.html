@@ -170,28 +170,43 @@
   <div class="slats"></div>
   <div class="header-inner">
     <div class="eyebrow">內部工具 · 橘子班 · 門市到府報價</div>
-    <h1>到府安裝正式報價試算</h1>
+    <h1>參觀貴賓　到府安裝試算　僅供同學內用</h1>
     <div class="sub">依片幅／款式／片數精算，含安裝與加價項目，未稅金額自動加稅 5%</div>
   </div>
 </div>
 
 <div class="wrap">
 
+  <div class="card">
+    <h2>服務方式與整單加價</h2>
+    <div class="row">
+      <div class="field" style="flex:1;">
+        <label>服務方式</label>
+        <div class="seg">
+          <label>
+            <input type="radio" name="serviceMode" value="install" checked onchange="updateServiceMode('install')">
+            <span>到府安裝</span>
+          </label>
+          <label>
+            <input type="radio" name="serviceMode" value="diy" onchange="updateServiceMode('diy')">
+            <span>DIY自取／宅配</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="toggle-row" id="elevatorRow">
+      <input type="checkbox" id="noElevator" onchange="renderSummary()">
+      <label for="noElevator" style="margin:0;">無電梯（整單 +500）</label>
+    </div>
+    <div class="note" id="serviceNote">
+      安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。若貴公司規則是每窗都要收安裝費，請告訴我，我再改邏輯。
+    </div>
+  </div>
+
   <div id="windowsContainer"></div>
 
   <div class="btn-row">
     <button class="primary" onclick="addWindow()">＋ 新增一組窗（軌道）</button>
-  </div>
-
-  <div class="card">
-    <h2>整單加價項目</h2>
-    <div class="toggle-row">
-      <input type="checkbox" id="noElevator" onchange="renderSummary()">
-      <label for="noElevator" style="margin:0;">無電梯（整單 +500）</label>
-    </div>
-    <div class="note">
-      安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。若貴公司規則是每窗都要收安裝費，請告訴我，我再改邏輯。
-    </div>
   </div>
 
   <div class="card">
@@ -236,7 +251,6 @@ function F(name, type, code, series, tier, avail, price){
   return { name, type, code, series, tier, avail, price };
 }
 const FABRICS = [
-  ...['P10-現代幾何|透光'].flatMap(()=>[]),
   F('現代幾何','透光','P10','40',240,'V',1900), F('現代幾何','透光','P10','40',300,'V',2200),
   F('現代幾何','透光','P10','60',240,'V',2400), F('現代幾何','透光','P10','60',300,'V',2800),
   F('現代幾何','透光','P10','80',300,'V',3700),
@@ -465,15 +479,17 @@ const FABRICS = [
 ];
 
 const INSTALL_FEE = 3600;
-const EXTRA_TRACK_FEE = 2000; // 單組軌道片數 >= 8
-const EXTRA_WINDOW_FEE = 1500; // 第2組窗起，每窗
-const NO_ELEVATOR_FEE = 500;
+const EXTRA_TRACK_FEE = 2000; // 單組軌道片數 >= 8（僅到府安裝收）
+const EXTRA_WINDOW_FEE = 1500; // 第2組窗起，每窗（僅到府安裝收）
+const NO_ELEVATOR_FEE = 500;   // 僅到府安裝收
+const SHIP_FEE_PER_WINDOW = 300; // DIY 模式：每組軌道運費
 const TAX_RATE = 1.05;
 
 /* ============ 狀態 ============ */
 let windows = [];
 let windowSeq = 0;
 let styleSeq = 0;
+let serviceMode = 'install'; // 'install' | 'diy'
 
 function newWindow(){
   windowSeq++;
@@ -510,9 +526,14 @@ function removeStyleRow(winId, styleId){
   render();
 }
 
+function updateServiceMode(val){
+  serviceMode = val;
+  render();
+}
+
 /* ============ 計算邏輯 ============ */
 
-// 高度 → 級距 (240 / 300 / null=超過)
+// 高度 → 級距 (240 / 300 / 'over'=超過)
 function heightTier(h){
   if (h === '' || h === null || isNaN(h)) return null;
   if (h <= 240) return 240;
@@ -529,6 +550,14 @@ function matchTrack(series, width){
   return candidates[0];
 }
 
+// 給定寬度，列出 40／60／80 三個系列中所有符合的規格（用於第一列的建議）
+function matchAllSeries(width){
+  if (!width) return [];
+  return ['40','60','80']
+    .map(series => ({ series, track: matchTrack(series, width) }))
+    .filter(x => x.track);
+}
+
 function fabricsFor(series, tier){
   if (!series || !tier || tier === 'over') return [];
   return FABRICS.filter(f => f.series === series && f.tier === tier);
@@ -542,8 +571,40 @@ function fabricLabel(f){
 /* ============ 渲染 ============ */
 
 function render(){
+  updateServiceCard();
   renderWindows();
   renderSummary();
+}
+
+function updateServiceCard(){
+  const elevatorRow = document.getElementById('elevatorRow');
+  const note = document.getElementById('serviceNote');
+  if (serviceMode === 'diy'){
+    elevatorRow.style.display = 'none';
+    note.textContent = 'DIY 模式：不收安裝費、軌道片數加收、多窗加收、無電梯加價，改以每組軌道 $300 估算運費（未稅）。';
+  } else {
+    elevatorRow.style.display = 'flex';
+    note.textContent = '安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。若貴公司規則是每窗都要收安裝費，請告訴我，我再改邏輯。';
+  }
+}
+
+// 第一列：輸入寬高後，列出所有符合的系列規格建議
+function buildSuggestionHtml(w){
+  if (w.width === '' || w.height === '') {
+    return `<div class="match-box">請輸入遮蔽寬度與高度，系統會自動列出可選規格</div>`;
+  }
+  const tier = heightTier(parseFloat(w.height));
+  if (tier === 'over') {
+    return `<div class="match-box warn">高度超過300cm，需人工評估報價（可能需加裝支架）</div>`;
+  }
+  const matches = matchAllSeries(parseFloat(w.width));
+  if (matches.length === 0) {
+    return `<div class="match-box warn">此寬度在 40／60／80 系列都找不到符合的軌道規格，請人工報價</div>`;
+  }
+  const list = matches
+    .map(m => `<b>${m.series}系列 ${m.track.pieces}片</b>（$${m.track.price.toLocaleString()}）`)
+    .join('　／　');
+  return `<div class="match-box">此寬度可選規格：${list}　→ 請在下方選擇單片寬幅</div>`;
 }
 
 function renderWindows(){
@@ -557,20 +618,23 @@ function renderWindows(){
     const track = matchTrack(w.series, parseFloat(w.width));
     const avail = fabricsFor(w.series, tier);
 
-    let matchHtml = '';
+    const suggestionHtml = buildSuggestionHtml(w);
+
+    // 第二列：選定單片寬幅後，顯示該系列的軌道未稅價格
+    let seriesMatchHtml = '';
     if (!w.series) {
-      matchHtml = `<div class="match-box">請先選擇單片寬幅</div>`;
+      seriesMatchHtml = `<div class="match-box">請選擇單片寬幅，即可看到對應軌道未稅價格</div>`;
     } else if (w.width === '' || w.height === '') {
-      matchHtml = `<div class="match-box">請輸入寬度與高度</div>`;
+      seriesMatchHtml = `<div class="match-box">請先輸入寬度與高度</div>`;
     } else if (tier === 'over') {
-      matchHtml = `<div class="match-box warn">高度超過300cm，需人工評估報價（可能需加裝支架）</div>`;
+      seriesMatchHtml = '';
     } else if (!track) {
-      matchHtml = `<div class="match-box warn">此寬幅系列找不到涵蓋此寬度的軌道規格，請人工報價</div>`;
+      seriesMatchHtml = `<div class="match-box warn">${w.series}系列找不到涵蓋此寬度的軌道規格，請人工報價</div>`;
     } else {
-      matchHtml = `<div class="match-box">
+      seriesMatchHtml = `<div class="match-box">
         比對規格：<b>${w.series}系列 ${track.pieces}片</b>（遮蔽寬度 ${track.minW}-${track.maxW}cm）
         ／軌道未稅價 <b>$${track.price.toLocaleString()}</b>
-        ${track.pieces >= 8 ? '<br>※ 此組片數≥8，加收軌道安裝費 $2,000' : ''}
+        ${track.pieces >= 8 && serviceMode === 'install' ? '<br>※ 此組片數≥8，加收軌道安裝費 $2,000' : ''}
       </div>`;
     }
 
@@ -604,24 +668,15 @@ function renderWindows(){
         </div>`;
     }).join('');
 
+    const extraLabel = serviceMode === 'install' ? '+$1,500' : '+$300 運費';
+
     div.innerHTML = `
       <div class="window-head">
-        <div class="window-title">窗 ${idx+1}${idx>0 ? '（第 '+(idx+1)+' 組軌道 +$1,500）' : ''}</div>
+        <div class="window-title">窗 ${idx+1}${idx>0 ? '（第 '+(idx+1)+' 組軌道 '+extraLabel+'）' : ''}</div>
         ${windows.length > 1 ? `<button class="danger" onclick="removeWindow(${w.id})">刪除此窗</button>` : ''}
       </div>
 
       <div class="row">
-        <div class="field" style="flex:1.4;">
-          <label>單片寬幅</label>
-          <div class="seg">
-            ${['40','60','80'].map(v => `
-              <label>
-                <input type="radio" name="series-${w.id}" value="${v}" ${w.series===v?'checked':''}
-                  onchange="updateWindow(${w.id},'series','${v}')">
-                <span>${v}寬</span>
-              </label>`).join('')}
-          </div>
-        </div>
         <div class="field">
           <label>遮蔽寬度 (cm)</label>
           <input type="number" value="${w.width}" placeholder="例如 266"
@@ -634,7 +689,23 @@ function renderWindows(){
         </div>
       </div>
 
-      ${matchHtml}
+      ${suggestionHtml}
+
+      <div class="row" style="margin-top:16px;">
+        <div class="field" style="flex:1.4;">
+          <label>單片寬幅</label>
+          <div class="seg">
+            ${['40','60','80'].map(v => `
+              <label>
+                <input type="radio" name="series-${w.id}" value="${v}" ${w.series===v?'checked':''}
+                  onchange="updateWindow(${w.id},'series','${v}')">
+                <span>${v}寬</span>
+              </label>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      ${seriesMatchHtml}
 
       <div style="margin-top:16px;">
         <label style="margin-bottom:10px;">款式選擇（可混搭多款，片數不需等於軌道總片數）</label>
@@ -648,7 +719,7 @@ function renderWindows(){
 
 function updateWindow(id, key, val){
   const w = windows.find(w => w.id === id);
-  w[key] = (key === 'width' || key === 'height') ? val : val;
+  w[key] = val;
   render();
 }
 function updateStyle(winId, styleId, key, val){
@@ -677,7 +748,7 @@ function computeAll(){
     }
     validWindowCount++;
     trackSubtotal += track.price;
-    if (track.pieces >= 8) extraTrackFeeTotal += EXTRA_TRACK_FEE;
+    if (track.pieces >= 8 && serviceMode === 'install') extraTrackFeeTotal += EXTRA_TRACK_FEE;
 
     let styleLines = [];
     w.styles.forEach(s => {
@@ -697,22 +768,29 @@ function computeAll(){
       height: w.height,
       trackSpec: `${w.series}系列 ${track.pieces}片（${track.minW}-${track.maxW}cm）`,
       trackPrice: track.price,
-      extraTrack: track.pieces >= 8,
+      extraTrack: track.pieces >= 8 && serviceMode === 'install',
       styleLines
     });
   });
 
-  const extraWindowFeeTotal = validWindowCount > 1 ? (validWindowCount - 1) * EXTRA_WINDOW_FEE : 0;
-  const noElevator = document.getElementById('noElevator').checked;
-  const elevatorFee = noElevator ? NO_ELEVATOR_FEE : 0;
+  let installFee = 0, extraWindowFeeTotal = 0, elevatorFee = 0, shippingFeeTotal = 0;
 
-  const preTax = trackSubtotal + fabricSubtotal + INSTALL_FEE + extraTrackFeeTotal + extraWindowFeeTotal + elevatorFee;
+  if (serviceMode === 'install'){
+    installFee = INSTALL_FEE;
+    extraWindowFeeTotal = validWindowCount > 1 ? (validWindowCount - 1) * EXTRA_WINDOW_FEE : 0;
+    const noElevator = document.getElementById('noElevator') ? document.getElementById('noElevator').checked : false;
+    elevatorFee = noElevator ? NO_ELEVATOR_FEE : 0;
+  } else {
+    shippingFeeTotal = validWindowCount * SHIP_FEE_PER_WINDOW;
+  }
+
+  const preTax = trackSubtotal + fabricSubtotal + installFee + extraTrackFeeTotal + extraWindowFeeTotal + elevatorFee + shippingFeeTotal;
   const total = Math.round(preTax * TAX_RATE);
 
   return {
     hasError, validWindowCount, windowLines,
     trackSubtotal, fabricSubtotal, extraTrackFeeTotal, extraWindowFeeTotal,
-    elevatorFee, installFee: INSTALL_FEE, preTax, total
+    elevatorFee, installFee, shippingFeeTotal, preTax, total
   };
 }
 
@@ -731,16 +809,20 @@ function renderSummary(){
   box.innerHTML = `
     <div class="summary-line"><span class="lbl">軌道小計（${r.validWindowCount}組）</span><span>$${r.trackSubtotal.toLocaleString()}</span></div>
     <div class="summary-line"><span class="lbl">布料小計</span><span>$${r.fabricSubtotal.toLocaleString()}</span></div>
-    <div class="summary-line"><span class="lbl">安裝費</span><span>$${r.installFee.toLocaleString()}</span></div>
-    ${r.extraTrackFeeTotal ? `<div class="summary-line"><span class="lbl">軌道片數≥8 加收</span><span>$${r.extraTrackFeeTotal.toLocaleString()}</span></div>` : ''}
-    ${r.extraWindowFeeTotal ? `<div class="summary-line"><span class="lbl">多窗加收（第2組起 x $1,500）</span><span>$${r.extraWindowFeeTotal.toLocaleString()}</span></div>` : ''}
-    ${r.elevatorFee ? `<div class="summary-line"><span class="lbl">無電梯加收</span><span>$${r.elevatorFee.toLocaleString()}</span></div>` : ''}
+    ${serviceMode === 'install' ? `
+      <div class="summary-line"><span class="lbl">安裝費</span><span>$${r.installFee.toLocaleString()}</span></div>
+      ${r.extraTrackFeeTotal ? `<div class="summary-line"><span class="lbl">軌道片數≥8 加收</span><span>$${r.extraTrackFeeTotal.toLocaleString()}</span></div>` : ''}
+      ${r.extraWindowFeeTotal ? `<div class="summary-line"><span class="lbl">多窗加收（第2組起 x $1,500）</span><span>$${r.extraWindowFeeTotal.toLocaleString()}</span></div>` : ''}
+      ${r.elevatorFee ? `<div class="summary-line"><span class="lbl">無電梯加收</span><span>$${r.elevatorFee.toLocaleString()}</span></div>` : ''}
+    ` : `
+      <div class="summary-line"><span class="lbl">運費（DIY，每組 $300 x ${r.validWindowCount}）</span><span>$${r.shippingFeeTotal.toLocaleString()}</span></div>
+    `}
     <div class="summary-line"><span class="lbl">未稅合計</span><span>$${r.preTax.toLocaleString()}</span></div>
     <div class="summary-line total"><span class="lbl">含稅總價 (×1.05)</span><span>$${r.total.toLocaleString()}</span></div>
     ${r.hasError ? '<div class="note" style="color:var(--warn);">＊有資料尚未完整或超出規格範圍，未列入計算</div>' : ''}
   `;
 
-  let text = `捷安片簾 到府安裝報價\n\n`;
+  let text = `捷安片簾 ${serviceMode === 'install' ? '到府安裝' : 'DIY自取／宅配'}報價\n\n`;
   r.windowLines.forEach(wl => {
     text += `【窗${wl.idx}】W${wl.width} x H${wl.height} cm\n`;
     text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '（含片數加收）' : ''}\n`;
@@ -751,13 +833,19 @@ function renderSummary(){
     }
     text += `\n`;
   });
-  text += `安裝費：$${r.installFee.toLocaleString()}\n`;
-  if (r.extraTrackFeeTotal) text += `軌道片數≥8加收：$${r.extraTrackFeeTotal.toLocaleString()}\n`;
-  if (r.extraWindowFeeTotal) text += `多窗加收：$${r.extraWindowFeeTotal.toLocaleString()}\n`;
-  if (r.elevatorFee) text += `無電梯加收：$${r.elevatorFee.toLocaleString()}\n`;
+
+  if (serviceMode === 'install'){
+    text += `安裝費：$${r.installFee.toLocaleString()}\n`;
+    if (r.extraTrackFeeTotal) text += `軌道片數≥8加收：$${r.extraTrackFeeTotal.toLocaleString()}\n`;
+    if (r.extraWindowFeeTotal) text += `多窗加收：$${r.extraWindowFeeTotal.toLocaleString()}\n`;
+    if (r.elevatorFee) text += `無電梯加收：$${r.elevatorFee.toLocaleString()}\n`;
+  } else {
+    text += `運費（DIY，每組 $300 x ${r.validWindowCount}）：$${r.shippingFeeTotal.toLocaleString()}\n`;
+  }
+
   text += `\n未稅合計：$${r.preTax.toLocaleString()}\n`;
   text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05）\n`;
-  text += `\n＊實際報價以現場丈量與最終確認款式後，業務估價為準，（尚未計算降高度、輕鋼架補強）;
+  text += `\n＊實際報價以現場丈量與最終確認款式後，業務估價為準${serviceMode === 'diy' ? '（DIY 運費為估算，實際依配送地區與件數計算）' : '（尚未計算降高度、輕鋼架補強）'}`;
 
   out.textContent = text;
   out.classList.remove('empty');
