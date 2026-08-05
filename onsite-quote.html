@@ -882,7 +882,7 @@ function computeAll(){
   }
 
   const preTax = trackSubtotal + fabricSubtotal + installFee + extraTrackFeeTotal + extraWindowFeeTotal + elevatorFee + shippingFeeTotal;
-  const total = Math.round(preTax * TAX_RATE);
+const total = Math.ceil((preTax * TAX_RATE) / 1000) * 1000;
 
   return {
     hasError, validWindowCount, windowLines,
