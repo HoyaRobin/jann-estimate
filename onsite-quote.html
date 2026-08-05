@@ -1010,7 +1010,7 @@ function renderSummary(){
   let text = `捷安片簾 ${serviceMode === 'install' ? '到府安裝' : 'DIY自取／宅配'}報價${applyPromo ? '（已套用絕版品出清75折）' : ''}\n\n`;
   r.windowLines.forEach(wl => {
     text += `【窗${wl.idx}】W${wl.width} x H${wl.height} cm\n`;
-    text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '（含片數加收）' : ''}\n`;
+    text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '' : ''}\n`;
     if (wl.styleLines.length){
       text += wl.styleLines.join('\n') + '\n';
     } else {
