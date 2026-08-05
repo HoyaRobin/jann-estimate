@@ -195,9 +195,12 @@
 <div class="header">
   <div class="slats"></div>
   <div class="header-inner">
-    <div class="eyebrow">內部工具 · 橘子班 · 門市到府報價</div>
+    <div class="eyebrow">內部工具 · 橘子班 · 接待快報</div>
+
     <h1>參觀估價試算　（僅供同學內用）</h1>
     <div class="sub">※※※未含降高及加固等特殊計算；依片幅／款式／片數，含安裝與加價項目，未稅金額自動加稅 5%</div>
+
+
   </div>
 </div>
 
@@ -242,6 +245,23 @@
     <div class="btn-row right">
       <button class="ghost" id="copyBtn" onclick="copyOutput()">複製報價文字</button>
     </div>
+  </div>
+
+  <div class="card">
+    <h2>限時活動：絕版品出清 75折</h2>
+    <div class="note">
+      活動期限：2026/7/27 ~ 2026/9/30<br>
+      絕版品布片，單就布片本身可享 75折（軌道費、安裝費／運費不打折）<br>
+      絕版品售罄不補貨，請留意無法預先保留布片
+    </div>
+    <div class="note" style="margin-top:8px;">
+      適用布號：P32、P33、P34、TW001、TW002-2、TW015、TW018、TW019、TW025、TW027、TW029、TW034、TW035
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="applyPromo" onchange="updatePromo(this.checked)">
+      <label for="applyPromo" style="margin:0;">本次報價套用絕版品75折優惠</label>
+    </div>
+    <div id="promoCompareBox" style="margin-top:14px;"></div>
   </div>
 
 </div>
@@ -511,11 +531,21 @@ const NO_ELEVATOR_FEE = 500;   // 僅到府安裝收
 const SHIP_FEE_PER_WINDOW = 300; // DIY 模式：每組軌道運費
 const TAX_RATE = 1.05;
 
+// 限時活動：絕版品出清，僅布片本身75折（軌道／安裝／運費不打折）
+const PROMO_DISCOUNT = 0.75;
+const PROMO_PERIOD_TEXT = '2026/7/27 ~ 2026/9/30';
+const PROMO_CODES = ['P32','P33','P34','TW001','TW002-2','TW015','TW018','TW019','TW025','TW027','TW029','TW034','TW035'];
+
+function isPromoCode(code){
+  return PROMO_CODES.some(pc => pc === code || pc.startsWith(code) || code.startsWith(pc));
+}
+
 /* ============ 狀態 ============ */
 let windows = [];
 let windowSeq = 0;
 let styleSeq = 0;
 let serviceMode = 'install'; // 'install' | 'diy'
+let applyPromo = false; // 本次報價是否套用絕版品出清75折
 
 function newWindow(){
   windowSeq++;
@@ -554,6 +584,11 @@ function removeStyleRow(winId, styleId){
 
 function updateServiceMode(val){
   serviceMode = val;
+  render();
+}
+
+function updatePromo(val){
+  applyPromo = val;
   render();
 }
 
@@ -669,6 +704,7 @@ function render(){
   updateServiceCard();
   renderWindows();
   renderSummary();
+  renderPromoCompare();
 }
 
 function updateServiceCard(){
@@ -828,13 +864,18 @@ function updateStyle(winId, styleId, key, val){
 
 /* ============ 計算總價與明細文字 ============ */
 
-function computeAll(){
+function computeAll(promoFlag){
+  if (promoFlag === undefined) promoFlag = applyPromo;
+
   let trackSubtotal = 0;
   let fabricSubtotal = 0;
   let extraTrackFeeTotal = 0;
   let windowLines = [];
   let hasError = false;
   let validWindowCount = 0;
+  let promoOriginalSubtotal = 0;
+  let promoDiscountedSubtotal = 0;
+  let promoItemCount = 0;
 
   windows.forEach((w, idx) => {
     const tier = heightTier(parseFloat(w.height));
@@ -852,9 +893,22 @@ function computeAll(){
       const avail = fabricsFor(w.series, tier);
       const chosen = avail.find(f => `${f.name}|${f.code}` === s.fabricKey);
       if (chosen && chosen.avail === 'V' && s.qty && Number(s.qty) > 0){
-        const lineTotal = chosen.price * Number(s.qty);
+        const qty = Number(s.qty);
+        const eligible = isPromoCode(chosen.code);
+        const unitPrice = chosen.price;
+        const discountUnit = Math.round(unitPrice * PROMO_DISCOUNT);
+        const appliedUnit = (eligible && promoFlag) ? discountUnit : unitPrice;
+        const lineTotal = appliedUnit * qty;
         fabricSubtotal += lineTotal;
-        styleLines.push(`　${chosen.name}（${chosen.code}） x ${s.qty}片　$${lineTotal.toLocaleString()}`);
+
+        if (eligible){
+          promoOriginalSubtotal += unitPrice * qty;
+          promoDiscountedSubtotal += discountUnit * qty;
+          promoItemCount += qty;
+        }
+
+        const tagTxt = eligible ? (promoFlag ? '（活動75折）' : '（可套用活動75折）') : '';
+        styleLines.push(`　${chosen.name}（${chosen.code}） x ${qty}片　$${lineTotal.toLocaleString()}${tagTxt}`);
       }
     });
 
@@ -882,13 +936,39 @@ function computeAll(){
   }
 
   const preTax = trackSubtotal + fabricSubtotal + installFee + extraTrackFeeTotal + extraWindowFeeTotal + elevatorFee + shippingFeeTotal;
-const total = Math.ceil((preTax * TAX_RATE) / 1000) * 1000;
+  const total = Math.ceil((preTax * TAX_RATE) / 1000) * 1000; // 對外報價：無條件進位到千位數
 
   return {
     hasError, validWindowCount, windowLines,
     trackSubtotal, fabricSubtotal, extraTrackFeeTotal, extraWindowFeeTotal,
-    elevatorFee, installFee, shippingFeeTotal, preTax, total
+    elevatorFee, installFee, shippingFeeTotal, preTax, total,
+    promoOriginalSubtotal, promoDiscountedSubtotal, promoItemCount
   };
+}
+
+function renderPromoCompare(){
+  const box = document.getElementById('promoCompareBox');
+  if (!box) return;
+
+  const rOff = computeAll(false);
+  const rOn = computeAll(true);
+
+  if (rOff.promoItemCount === 0){
+    box.innerHTML = `<div class="note">目前尚未選到活動適用布款，沒有价差可比較。</div>`;
+    return;
+  }
+
+  const fabricDiff = rOff.promoOriginalSubtotal - rOff.promoDiscountedSubtotal;
+  const totalDiff = rOff.total - rOn.total;
+
+  box.innerHTML = `
+    <div class="summary-line"><span class="lbl">活動布款原价小計</span><span>$${rOff.promoOriginalSubtotal.toLocaleString()}</span></div>
+    <div class="summary-line"><span class="lbl">活動布款75折後小計</span><span>$${rOff.promoDiscountedSubtotal.toLocaleString()}</span></div>
+    <div class="summary-line"><span class="lbl">布片价差</span><span>-$${fabricDiff.toLocaleString()}</span></div>
+    <div class="summary-line"><span class="lbl">未套用活動　含稅總價</span><span>$${rOff.total.toLocaleString()}</span></div>
+    <div class="summary-line total"><span class="lbl">套用活動後　含稅總價</span><span>$${rOn.total.toLocaleString()}</span></div>
+    <div class="note" style="margin-top:6px;">整單价差：省 $${totalDiff.toLocaleString()}（依千位進位後計算的實際差額，僅供參考）</div>
+  `;
 }
 
 function renderSummary(){
@@ -915,11 +995,11 @@ function renderSummary(){
       <div class="summary-line"><span class="lbl">運費（DIY，每組 $300 x ${r.validWindowCount}）</span><span>$${r.shippingFeeTotal.toLocaleString()}</span></div>
     `}
     <div class="summary-line"><span class="lbl">未稅合計</span><span>$${r.preTax.toLocaleString()}</span></div>
-    <div class="summary-line total"><span class="lbl">含稅總價 (×1.05)</span><span>$${r.total.toLocaleString()}</span></div>
+    <div class="summary-line total"><span class="lbl">含稅總價（進位至千位）</span><span>$${r.total.toLocaleString()}</span></div>
     ${r.hasError ? '<div class="note" style="color:var(--warn);">＊有資料尚未完整或超出規格範圍，未列入計算</div>' : ''}
   `;
 
-  let text = `捷安片簾 ${serviceMode === 'install' ? '到府安裝' : 'DIY自取／宅配'}報價\n\n`;
+  let text = `捷安片簾 ${serviceMode === 'install' ? '到府安裝' : 'DIY自取／宅配'}報價${applyPromo ? '（已套用絕版品出清75折）' : ''}\n\n`;
   r.windowLines.forEach(wl => {
     text += `【窗${wl.idx}】W${wl.width} x H${wl.height} cm\n`;
     text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '（含片數加收）' : ''}\n`;
@@ -941,7 +1021,7 @@ function renderSummary(){
   }
 
   text += `\n未稅合計：$${r.preTax.toLocaleString()}\n`;
-  text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05）\n`;
+  text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05，無條件進位至千位）\n`;
   text += `\n＊實際報價以現場丈量與最終確認款式後，業務估價為準${serviceMode === 'diy' ? '（DIY 運費為估算，實際依配送地區與件數計算）' : '（尚未計算降高度、輕鋼架補強）'}`;
 
   out.textContent = text;
