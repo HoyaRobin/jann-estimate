@@ -162,6 +162,32 @@
   .btn-row.right{ justify-content:flex-end; }
 
   select:disabled{ color:#b3ab97; background:#f2efe6; }
+
+  .combo{ position:relative; }
+  .combo-input{
+    width:100%; padding:11px 12px; border:1px solid #cfc7b2; border-radius:5px;
+    font-size:14px; background:#fbfaf7; color:var(--ink);
+  }
+  .combo-input:focus{ outline:none; border-color:var(--brass); }
+  .combo-input:disabled{ color:#b3ab97; background:#f2efe6; }
+  .combo-list{
+    position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:30;
+    background:#fff; border:1px solid var(--line); border-radius:6px;
+    max-height:240px; overflow-y:auto; box-shadow:0 8px 20px rgba(0,0,0,0.14);
+  }
+  .combo-item{
+    display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer;
+    font-size:13px; border-bottom:1px solid #f2efe6;
+  }
+  .combo-item:last-child{ border-bottom:none; }
+  .combo-item:hover{ background:#f6f2e8; }
+  .combo-item.disabled{ color:#b3ab97; cursor:not-allowed; }
+  .combo-item.disabled:hover{ background:transparent; }
+  .combo-item-name{ font-weight:700; flex:1.2; }
+  .combo-item-meta{ color:var(--sub2); flex:1; font-size:12px; }
+  .combo-item-price{ font-weight:700; color:var(--brass-dark); flex:0 0 auto; min-width:64px; text-align:right; }
+  .combo-item.disabled .combo-item-price{ color:var(--warn); }
+  .combo-empty{ padding:12px; font-size:13px; color:var(--sub2); text-align:center; }
 </style>
 </head>
 <body>
@@ -568,6 +594,75 @@ function fabricLabel(f){
   return `${f.name}（${f.type} / ${f.code}） ${priceTxt}`;
 }
 
+/* ============ 款式搜尋式選單（combobox） ============ */
+
+function filterFabrics(avail, query){
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return avail;
+  return avail.filter(f => {
+    const hay = `${f.name} ${f.code} ${f.type}`.toLowerCase();
+    return hay.includes(q);
+  });
+}
+
+function comboListHtml(list, winId, styleId){
+  if (list.length === 0){
+    return `<div class="combo-empty">找不到符合的布款</div>`;
+  }
+  return list.map(f => {
+    const key = `${f.name}|${f.code}`;
+    const disabled = f.avail === 'X';
+    const priceTxt = disabled ? '無此款' : ('$' + f.price.toLocaleString());
+    const clickAction = disabled ? '' : `selectFabric(${winId},${styleId},'${key}')`;
+    return `<div class="combo-item ${disabled?'disabled':''}" onmousedown="event.preventDefault();${clickAction}">
+      <span class="combo-item-name">${f.name}</span>
+      <span class="combo-item-meta">${f.type} · ${f.code}</span>
+      <span class="combo-item-price">${priceTxt}</span>
+    </div>`;
+  }).join('');
+}
+
+function onComboInput(winId, styleId, value){
+  const w = windows.find(w => w.id === winId);
+  if (!w) return;
+  const tier = heightTier(parseFloat(w.height));
+  const avail = fabricsFor(w.series, tier);
+  const filtered = filterFabrics(avail, value);
+  const listEl = document.getElementById(`combo-list-${winId}-${styleId}`);
+  if (listEl){
+    listEl.innerHTML = comboListHtml(filtered, winId, styleId);
+    listEl.style.display = 'block';
+  }
+}
+
+function onComboFocus(winId, styleId, inputEl){
+  inputEl.select();
+  onComboInput(winId, styleId, '');
+}
+
+function onComboBlur(winId, styleId){
+  setTimeout(() => {
+    const listEl = document.getElementById(`combo-list-${winId}-${styleId}`);
+    if (listEl) listEl.style.display = 'none';
+
+    const inputEl = document.getElementById(`combo-input-${winId}-${styleId}`);
+    const w = windows.find(w => w.id === winId);
+    if (!w || !inputEl) return;
+    const s = w.styles.find(s => s.id === styleId);
+    const tier = heightTier(parseFloat(w.height));
+    const avail = fabricsFor(w.series, tier);
+    const chosen = avail.find(f => `${f.name}|${f.code}` === s.fabricKey);
+    inputEl.value = chosen ? `${chosen.name}（${chosen.code}）` : '';
+  }, 150);
+}
+
+function selectFabric(winId, styleId, key){
+  const w = windows.find(w => w.id === winId);
+  const s = w.styles.find(s => s.id === styleId);
+  s.fabricKey = key;
+  render();
+}
+
 /* ============ 渲染 ============ */
 
 function render(){
@@ -639,24 +734,26 @@ function renderWindows(){
     }
 
     const stylesHtml = w.styles.map(s => {
-      const options = avail.map(f => {
-        const key = `${f.name}|${f.code}`;
-        const disabled = f.avail === 'X' ? 'disabled' : '';
-        const selected = s.fabricKey === key ? 'selected' : '';
-        return `<option value="${key}" ${disabled} ${selected}>${fabricLabel(f)}</option>`;
-      }).join('');
-
       const chosen = avail.find(f => `${f.name}|${f.code}` === s.fabricKey);
       const lineTotal = (chosen && chosen.avail === 'V' && s.qty) ? chosen.price * Number(s.qty) : 0;
+      const comboValue = chosen ? `${chosen.name}（${chosen.code}）` : '';
+      const comboDisabled = avail.length === 0;
+      const comboPlaceholder = comboDisabled ? '請先選擇單片寬幅與高度' : '輸入關鍵字篩選布款（名稱／布號／布種）';
 
       return `
         <div class="style-row">
           <div class="field">
             <label>款式</label>
-            <select onchange="updateStyle(${w.id},${s.id},'fabricKey',this.value)" ${avail.length===0?'disabled':''}>
-              <option value="">－ 請選擇款式 －</option>
-              ${options}
-            </select>
+            <div class="combo">
+              <input type="text" class="combo-input" id="combo-input-${w.id}-${s.id}" autocomplete="off"
+                value="${comboValue}"
+                placeholder="${comboPlaceholder}"
+                ${comboDisabled ? 'disabled' : ''}
+                oninput="onComboInput(${w.id},${s.id},this.value)"
+                onfocus="onComboFocus(${w.id},${s.id},this)"
+                onblur="onComboBlur(${w.id},${s.id})">
+              <div class="combo-list" id="combo-list-${w.id}-${s.id}" style="display:none;"></div>
+            </div>
           </div>
           <div class="field qty">
             <label>片數</label>
