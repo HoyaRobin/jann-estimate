@@ -124,10 +124,18 @@
   .match-box.warn{ background:#fbf0ee; border-color:#d8beb8; color:var(--warn); }
   .match-box b{ color:var(--brass-dark); }
 
-  .style-row{
-    display:flex; gap:10px; align-items:flex-end; margin-top:10px; padding-top:10px; border-top:1px solid #eee8db;
+  .style-block{
+    margin-top:10px; padding-top:10px; border-top:1px solid #eee8db;
   }
-  .style-row:first-of-type{ border-top:none; margin-top:0; padding-top:0; }
+  .style-block:first-of-type{ border-top:none; margin-top:0; padding-top:0; }
+  .search-input{
+    width:100%; padding:8px 10px; border:1px solid #cfc7b2; border-radius:5px;
+    font-size:13.5px; background:#fffdf9; color:var(--ink); margin-bottom:8px;
+  }
+  .search-input:focus{ outline:none; border-color:var(--brass); }
+  .style-row{
+    display:flex; gap:10px; align-items:flex-end;
+  }
   .style-row .field{ flex:3; }
   .style-row .field.qty{ flex:1; min-width:70px; }
   .style-row .price-tag{
@@ -503,7 +511,7 @@ function newWindow(){
 }
 function newStyleRow(){
   styleSeq++;
-  return { id: styleSeq, fabricKey: '', qty: '' };
+  return { id: styleSeq, fabricKey: '', qty: '', search: '' };
 }
 
 function addWindow(){
@@ -571,9 +579,25 @@ function fabricLabel(f){
 /* ============ 渲染 ============ */
 
 function render(){
+  // 重繪前先記住目前聚焦的輸入框（例如搜尋框），避免打字打到一半游標跳掉
+  const active = document.activeElement;
+  const activeId = (active && active.id) ? active.id : null;
+  const selStart = (active && typeof active.selectionStart === 'number') ? active.selectionStart : null;
+  const selEnd = (active && typeof active.selectionEnd === 'number') ? active.selectionEnd : null;
+
   updateServiceCard();
   renderWindows();
   renderSummary();
+
+  if (activeId){
+    const el = document.getElementById(activeId);
+    if (el){
+      el.focus();
+      if (selStart !== null && el.setSelectionRange){
+        try { el.setSelectionRange(selStart, selEnd); } catch(e){}
+      }
+    }
+  }
 }
 
 function updateServiceCard(){
@@ -639,32 +663,51 @@ function renderWindows(){
     }
 
     const stylesHtml = w.styles.map(s => {
-      const options = avail.map(f => {
+      const term = (s.search || '').trim().toLowerCase();
+      const filtered = term
+        ? avail.filter(f => f.code.toLowerCase().includes(term) || f.name.toLowerCase().includes(term) || f.type.toLowerCase().includes(term))
+        : avail;
+
+      const options = filtered.map(f => {
         const key = `${f.name}|${f.code}`;
         const disabled = f.avail === 'X' ? 'disabled' : '';
         const selected = s.fabricKey === key ? 'selected' : '';
         return `<option value="${key}" ${disabled} ${selected}>${fabricLabel(f)}</option>`;
       }).join('');
 
+      // 若目前已選的款式被篩選條件排除，仍要保留在選單中，避免選取狀態消失
       const chosen = avail.find(f => `${f.name}|${f.code}` === s.fabricKey);
+      const chosenStillShown = chosen && filtered.includes(chosen);
+      const keepSelectedOption = (chosen && !chosenStillShown)
+        ? `<option value="${chosen.name}|${chosen.code}" selected>${fabricLabel(chosen)}（目前已選，篩選條件外）</option>`
+        : '';
+
       const lineTotal = (chosen && chosen.avail === 'V' && s.qty) ? chosen.price * Number(s.qty) : 0;
+      const noMatch = term && filtered.length === 0;
 
       return `
-        <div class="style-row">
-          <div class="field">
-            <label>款式</label>
-            <select onchange="updateStyle(${w.id},${s.id},'fabricKey',this.value)" ${avail.length===0?'disabled':''}>
-              <option value="">－ 請選擇款式 －</option>
-              ${options}
-            </select>
+        <div class="style-block">
+          <input type="text" class="search-input" id="search-${w.id}-${s.id}" placeholder="搜尋布號或名稱，例如 P13"
+            value="${s.search || ''}"
+            oninput="updateStyle(${w.id},${s.id},'search',this.value)">
+          <div class="style-row">
+            <div class="field">
+              <label>款式${term ? `（篩選中：${filtered.length} 項符合）` : ''}</label>
+              <select onchange="updateStyle(${w.id},${s.id},'fabricKey',this.value)" ${avail.length===0?'disabled':''}>
+                <option value="">－ 請選擇款式 －</option>
+                ${keepSelectedOption}
+                ${options}
+              </select>
+              ${noMatch ? '<div class="note" style="color:var(--warn);margin-top:4px;">找不到符合的布號／名稱</div>' : ''}
+            </div>
+            <div class="field qty">
+              <label>片數</label>
+              <input type="number" min="0" value="${s.qty}" placeholder="片數"
+                onchange="updateStyle(${w.id},${s.id},'qty',this.value)">
+            </div>
+            <div class="price-tag">${lineTotal ? '$'+lineTotal.toLocaleString() : ''}</div>
+            <button class="danger" onclick="removeStyleRow(${w.id},${s.id})">移除</button>
           </div>
-          <div class="field qty">
-            <label>片數</label>
-            <input type="number" min="0" value="${s.qty}" placeholder="片數"
-              onchange="updateStyle(${w.id},${s.id},'qty',this.value)">
-          </div>
-          <div class="price-tag">${lineTotal ? '$'+lineTotal.toLocaleString() : ''}</div>
-          <button class="danger" onclick="removeStyleRow(${w.id},${s.id})">移除</button>
         </div>`;
     }).join('');
 
@@ -826,7 +869,7 @@ function renderSummary(){
   let text = `捷安片簾 ${serviceMode === 'install' ? '到府安裝' : 'DIY自取／宅配'}報價\n\n`;
   r.windowLines.forEach(wl => {
     text += `【窗${wl.idx}】W${wl.width} x H${wl.height} cm\n`;
-    text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '' : ''}\n`;
+    text += `　軌道：${wl.trackSpec}　$${wl.trackPrice.toLocaleString()}${wl.extraTrack ? '（含片數加收）' : ''}\n`;
     if (wl.styleLines.length){
       text += wl.styleLines.join('\n') + '\n';
     } else {
