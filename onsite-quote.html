@@ -1010,7 +1010,7 @@ function renderSummary(){
     ${serviceMode === 'install' ? `
       <div class="summary-line"><span class="lbl">安裝費（$${INSTALL_FEE.toLocaleString()} x ${r.validWindowCount}窗）</span><span>$${r.installFeeFullTotal.toLocaleString()}</span></div>
       ${r.multiWindowDiscountTotal ? `<div class="summary-line"><span class="lbl">同日安裝優惠（第2組窗起，每窗 -$${MULTI_WINDOW_DISCOUNT.toLocaleString()} x ${r.validWindowCount-1}窗）</span><span>-$${r.multiWindowDiscountTotal.toLocaleString()}</span></div>` : ''}
-      ${r.extraTrackFeeTotal ? `<div class="summary-line"><span class="lbl">軌道片數≥8 加收</span><span>$${r.extraTrackFeeTotal.toLocaleString()}</span></div>` : ''}
+      ${r.extraTrackFeeTotal ? `<div class="summary-line"><span class="lbl">軌道片數≥8 雙軌加收</span><span>$${r.extraTrackFeeTotal.toLocaleString()}</span></div>` : ''}
       ${r.elevatorFee ? `<div class="summary-line"><span class="lbl">無電梯加收</span><span>$${r.elevatorFee.toLocaleString()}</span></div>` : ''}
     ` : `
       <div class="summary-line"><span class="lbl">運費（DIY，每組 $300 x ${r.validWindowCount}）</span><span>$${r.shippingFeeTotal.toLocaleString()}</span></div>
