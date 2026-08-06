@@ -276,16 +276,16 @@
     { spec:'80x12', maxWidth:905, diy240Low:null,  diy240High:null,  diy300Low:54000, diy300High:86000, low240:null,  high240:null,  low300:56400, high300:87900 },
   ];
 
-  // 絕版布片優惠 - TW002-2 奶油橘 半遮光(75折,單片布款價,獨立查詢用)
+  // 絕版布片優惠 - TW002-2 奶油橘 半遮光(單片布款價,依高度級距,獨立查詢用+自動試算共用)
   let promoFabric = {
     name: 'TW002-2 奶油橘 半遮光',
     discount: 0.75,
     rows: [
-      { width:'80寬幅', length:'不限布長', price:3100 },
-      { width:'60寬幅', length:'292長',   price:2400 },
-      { width:'60寬幅', length:'232長',   price:2000 },
-      { width:'40寬幅', length:'292長',   price:1700 },
-      { width:'40寬幅', length:'232長',   price:1500 },
+      { width:'80寬幅', length:'300內', price:3100 },
+      { width:'60寬幅', length:'300內', price:2400 },
+      { width:'60寬幅', length:'240內', price:2000 },
+      { width:'40寬幅', length:'300內', price:1700 },
+      { width:'40寬幅', length:'240內', price:1500 },
     ]
   };
 
@@ -296,7 +296,7 @@
   // 292長→300級距,232長→240級距;80系列不限布長,兩級距同價
   function promoUnitPrice(series, bracket){
     if (series === '80') return promoFabric.rows.find(r => r.width === '80寬幅').price;
-    const lengthLabel = bracket === '240' ? '232長' : '292長';
+    const lengthLabel = bracket === '240' ? '240內' : '300內';
     const row = promoFabric.rows.find(r => r.width === series + '寬幅' && r.length === lengthLabel);
     return row ? row.price : null;
   }
