@@ -1036,7 +1036,7 @@ function renderSummary(){
   if (serviceMode === 'install'){
     text += `安裝費（$${INSTALL_FEE.toLocaleString()} x ${r.validWindowCount}窗）：$${r.installFeeFullTotal.toLocaleString()}\n`;
     if (r.multiWindowDiscountTotal) text += `同日安裝優惠（第2組窗起，每窗 -$${MULTI_WINDOW_DISCOUNT.toLocaleString()} x ${r.validWindowCount-1}窗）：-$${r.multiWindowDiscountTotal.toLocaleString()}\n`;
-    if (r.extraTrackFeeTotal) text += `軌道片數≥8加收：$${r.extraTrackFeeTotal.toLocaleString()}\n`;
+    if (r.extraTrackFeeTotal) text += `軌道片數≥8 加收雙軌費：$${r.extraTrackFeeTotal.toLocaleString()}\n`;
     if (r.elevatorFee) text += `無電梯加收：$${r.elevatorFee.toLocaleString()}\n`;
   } else {
     text += `運費（DIY，每組 $300 x ${r.validWindowCount}）：$${r.shippingFeeTotal.toLocaleString()}\n`;
