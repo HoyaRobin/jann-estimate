@@ -1037,7 +1037,7 @@ function renderSummary(){
 
   text += `\n未稅合計：$${r.preTax.toLocaleString()}\n`;
   text += `含稅總價：$${r.total.toLocaleString()}（未稅金額 ×1.05）\n`;
-  text += `\n＊實際報價以現場丈量與最終確認款式後，業務估價為準${serviceMode === 'diy' ? '（DIY 運費為估算，實際依配送地區與件數計算）' : '（尚未計算降高度、輕鋼架補強）'}`;
+  text += `\n＊實際報價以現場丈量與最終確認款式後，業務估價為準${serviceMode === 'diy' ? '（DIY 運費為估算，實際依配送地區與件數計算）' : '（尚未計算降高度、輕鋼架補強、雙馬尾、轉向拉棒等相對複雜的計算）'}`;
 
   out.textContent = text;
   out.classList.remove('empty');
