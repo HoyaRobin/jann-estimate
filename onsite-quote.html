@@ -630,7 +630,10 @@ function matchAllSeries(width){
 
 function fabricsFor(series, tier){
   if (!series || !tier || tier === 'over') return [];
-  return FABRICS.filter(f => f.series === series && f.tier === tier);
+  // 80系列布料只做一種布長(涵蓋高300cm內)，沒有另外分240級距的資料，
+  // 所以80系列只要高度≤300cm，一律歸到300級距去查詢布價
+  const effectiveTier = (series === '80' && tier === 240) ? 300 : tier;
+  return FABRICS.filter(f => f.series === series && f.tier === effectiveTier);
 }
 
 function fabricLabel(f){
