@@ -143,6 +143,12 @@
   .note{ font-size:12px; color:#8a836c; margin-top:10px; }
   details summary{ cursor:pointer; font-size:13px; color:#726d5c; font-weight:700; }
   .table-scroll{ overflow-x:auto; }
+
+  .promo-badge{
+    display:inline-block; font-size:11px; font-weight:700; color:#fff;
+    background:var(--warn); padding:2px 8px; border-radius:3px; margin-left:8px;
+    vertical-align:middle;
+  }
 </style>
 </head>
 <body>
@@ -223,6 +229,29 @@
     </details>
   </div>
 
+  <div class="card">
+    <details>
+      <summary>絕版布片優惠(單一布款查詢,非自動試算)</summary>
+      <div style="margin-top:14px;" class="table-scroll">
+        <h2 style="margin-bottom:10px;">TW002-2 奶油橘 半遮光<span class="promo-badge">75折 限量絕版</span></h2>
+        <table id="promoFabricTable">
+          <thead>
+            <tr>
+              <th>寬幅</th>
+              <th>布長</th>
+              <th>原價</th>
+              <th>75折特價</th>
+            </tr>
+          </thead>
+          <tbody id="promoFabricBody"></tbody>
+        </table>
+        <div class="note">
+          此為單片布款的原價／特價對照,與上方「片簾估價表」的多片組裝級距計算方式不同,僅供查詢比對。80寬幅為統一價,不限布長。
+        </div>
+      </div>
+    </details>
+  </div>
+
 </div>
 
 <script>
@@ -246,6 +275,19 @@
     { spec:'80x10', maxWidth:755, diy240Low:null,  diy240High:null,  diy300Low:45000, diy300High:71000, low240:null,  high240:null,  low300:47600, high300:73900 },
     { spec:'80x12', maxWidth:905, diy240Low:null,  diy240High:null,  diy300Low:54000, diy300High:86000, low240:null,  high240:null,  low300:56400, high300:87900 },
   ];
+
+  // 絕版布片優惠 - TW002-2 奶油橘 半遮光(75折,單片布款價,獨立查詢用)
+  let promoFabric = {
+    name: 'TW002-2 奶油橘 半遮光',
+    discount: 0.75,
+    rows: [
+      { width:'80寬幅', length:'不限布長', price:3100 },
+      { width:'60寬幅', length:'292長',   price:2400 },
+      { width:'60寬幅', length:'232長',   price:2000 },
+      { width:'40寬幅', length:'292長',   price:1700 },
+      { width:'40寬幅', length:'232長',   price:1500 },
+    ]
+  };
 
   function seriesOf(spec){ return spec.split('x')[0]; }
 
@@ -276,6 +318,22 @@
 
   function updateCell(i, key, value){
     data[i][key] = Number(value);
+  }
+
+  function renderPromoFabricTable(){
+    const body = document.getElementById('promoFabricBody');
+    body.innerHTML = '';
+    promoFabric.rows.forEach(r => {
+      const promoPrice = Math.round(r.price * promoFabric.discount);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="readonly">${r.width}</td>
+        <td class="readonly">${r.length}</td>
+        <td>$${r.price.toLocaleString()}</td>
+        <td class="readonly">$${promoPrice.toLocaleString()}</td>
+      `;
+      body.appendChild(tr);
+    });
   }
 
   // 到府安裝估價緩衝金額:避免抓到表定最低價,壓縮經銷實際報價的彈性空間
@@ -446,6 +504,7 @@ ID:@homedesyne`;
   }
 
   renderTable();
+  renderPromoFabricTable();
 </script>
 
 </body>
