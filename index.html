@@ -143,12 +143,6 @@
   .note{ font-size:12px; color:#8a836c; margin-top:10px; }
   details summary{ cursor:pointer; font-size:13px; color:#726d5c; font-weight:700; }
   .table-scroll{ overflow-x:auto; }
-
-  .promo-badge{
-    display:inline-block; font-size:11px; font-weight:700; color:#fff;
-    background:var(--warn); padding:2px 8px; border-radius:3px; margin-left:8px;
-    vertical-align:middle;
-  }
 </style>
 </head>
 <body>
@@ -229,29 +223,6 @@
     </details>
   </div>
 
-  <div class="card">
-    <details>
-      <summary>絕版布片優惠(單一布款查詢,非自動試算)</summary>
-      <div style="margin-top:14px;" class="table-scroll">
-        <h2 style="margin-bottom:10px;">TW002-2 奶油橘 半遮光<span class="promo-badge">75折 限量絕版</span></h2>
-        <table id="promoFabricTable">
-          <thead>
-            <tr>
-              <th>寬幅</th>
-              <th>布長</th>
-              <th>原價</th>
-              <th>75折特價</th>
-            </tr>
-          </thead>
-          <tbody id="promoFabricBody"></tbody>
-        </table>
-        <div class="note">
-          此為單片布料成本對照。實際估價已自動整合進上方「輸入尺寸」的自動試算:系統會用主表同規格的片數 × 這款布的單片價 + 主表同規格既有的安裝加成,算出這款促銷布款的到府／DIY起價,並與原本布款比較取最低者顯示。
-        </div>
-      </div>
-    </details>
-  </div>
-
 </div>
 
 <script>
@@ -276,30 +247,7 @@
     { spec:'80x12', maxWidth:905, diy240Low:null,  diy240High:null,  diy300Low:54000, diy300High:86000, low240:null,  high240:null,  low300:56400, high300:87900 },
   ];
 
-  // 絕版布片優惠 - TW002-2 奶油橘 半遮光(單片布款價,依高度級距,獨立查詢用+自動試算共用)
-  let promoFabric = {
-    name: 'TW002-2 奶油橘 半遮光',
-    discount: 0.75,
-    rows: [
-      { width:'80寬幅', length:'300內', price:3100 },
-      { width:'60寬幅', length:'300內', price:2400 },
-      { width:'60寬幅', length:'240內', price:2000 },
-      { width:'40寬幅', length:'300內', price:1700 },
-      { width:'40寬幅', length:'240內', price:1500 },
-    ]
-  };
-
   function seriesOf(spec){ return spec.split('x')[0]; }
-  function panelCountOf(spec){ return Number(spec.split('x')[1]); }
-
-  // 依系列(40/60/80)與高度級距(240/300)取得絕版促銷布片的單片價
-  // 292長→300級距,232長→240級距;80系列不限布長,兩級距同價
-  function promoUnitPrice(series, bracket){
-    if (series === '80') return promoFabric.rows.find(r => r.width === '80寬幅').price;
-    const lengthLabel = bracket === '240' ? '240內' : '300內';
-    const row = promoFabric.rows.find(r => r.width === series + '寬幅' && r.length === lengthLabel);
-    return row ? row.price : null;
-  }
 
   function renderTable(){
     const body = document.getElementById('priceBody');
@@ -330,22 +278,6 @@
     data[i][key] = Number(value);
   }
 
-  function renderPromoFabricTable(){
-    const body = document.getElementById('promoFabricBody');
-    body.innerHTML = '';
-    promoFabric.rows.forEach(r => {
-      const promoPrice = Math.round(r.price * promoFabric.discount);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="readonly">${r.width}</td>
-        <td class="readonly">${r.length}</td>
-        <td>$${r.price.toLocaleString()}</td>
-        <td class="readonly">$${promoPrice.toLocaleString()}</td>
-      `;
-      body.appendChild(tr);
-    });
-  }
-
   // 到府安裝估價緩衝金額:避免抓到表定最低價,壓縮經銷實際報價的彈性空間
   let ONSITE_BUFFER = 2000;
 
@@ -373,58 +305,6 @@
     });
 
     return matches;
-  }
-
-  // 絕版促銷布款(TW002-2)自動估價:片數沿用主表同規格,單片布料成本改用促銷價,
-  // 安裝/軌道加成沿用主表同規格既有的「到府－DIY」差額
-  function promoMatchesForField(width, bracket){
-    const series = ['40','60','80'];
-    let matches = [];
-
-    const onsiteField = bracket === '240' ? 'low240' : 'low300';
-    const onsiteFallback = 'low300';
-    const diyField = bracket === '240' ? 'diy240Low' : 'diy300Low';
-    const diyFallback = 'diy300Low';
-
-    series.forEach(s => {
-      const rows = data.filter(r => seriesOf(r.spec) === s).sort((a,b) => a.maxWidth - b.maxWidth);
-      const match = rows.find(r => r.maxWidth >= width);
-      if (!match) return;
-
-      const unitPrice = promoUnitPrice(s, bracket);
-      if (unitPrice === null) return;
-
-      let existingOnsite = match[onsiteField];
-      if (existingOnsite === null && match[onsiteFallback] !== null) existingOnsite = match[onsiteFallback];
-      let existingDiy = match[diyField];
-      if (existingDiy === null && match[diyFallback] !== null) existingDiy = match[diyFallback];
-      if (existingOnsite === null || existingDiy === null || existingOnsite === undefined || existingDiy === undefined) return;
-
-      const installMarkup = existingOnsite - existingDiy;
-      const panelCount = panelCountOf(match.spec);
-      const diyPrice = panelCount * unitPrice;
-      const onsitePrice = diyPrice + installMarkup;
-
-      matches.push({ series: s, spec: match.spec, maxWidth: match.maxWidth, panelCount, unitPrice, diyPrice, onsitePrice });
-    });
-
-    return matches;
-  }
-
-  function findPromoQuote(width, height){
-    let bracket;
-    if (height <= 240) bracket = '240';
-    else if (height <= 300) bracket = '300';
-    else return { error: 'height' };
-
-    const matches = promoMatchesForField(width, bracket);
-    if (matches.length === 0) return { error: 'width' };
-
-    const onsiteMatches = matches.map(m => ({ ...m, onsitePrice: m.onsitePrice + ONSITE_BUFFER }));
-    const onsitePrice = Math.min(...onsiteMatches.map(m => m.onsitePrice));
-    const diyPrice = Math.min(...matches.map(m => m.diyPrice));
-
-    return { onsitePrice, diyPrice, onsiteMatches, diyMatches: matches };
   }
 
   function findLowestQuote(width, height){
@@ -473,7 +353,6 @@
     }
 
     const result = findLowestQuote(w, h);
-    const promoResult = findPromoQuote(w, h);
 
     if (result.error === 'height'){
       const msg =
@@ -509,13 +388,6 @@
 
     const dimLine = `捷安片簾 W${w} H${h} 公分`;
 
-    let promoLine = '（另有絕版品布片優惠活動~26/9/30，售完為止）';
-    let promoDiyLine = '';
-    if (promoResult && !promoResult.error){
-      promoLine = `【絕版促銷】TW002-2 奶油橘 半遮光(75折限量,~26/9/30售完為止)\n到府粗估約 $${promoResult.onsitePrice.toLocaleString()} 起`;
-      promoDiyLine = `\n【絕版促銷】TW002-2 奶油橘 半遮光(75折限量,~26/9/30售完為止)\nDIY粗估約 $${promoResult.diyPrice.toLocaleString()} 起`;
-    }
-
     const onsiteText =
 `${dimLine}
 ${onsiteLine}
@@ -526,7 +398,7 @@ ${onsiteLine}
 
 您可提供電話，我請當地夥伴就近服務
 
-${promoLine}
+（另有絕版品布片優惠活動~26/9/30，售完為止）
 
 ${onsiteBreakdown}`;
 
@@ -543,7 +415,6 @@ ${diyLine}
 取決款式
 
 ${diyBreakdown}
-${promoDiyLine}
 
 如需進一步討論DIY客製及選款估價
 請加官方LINE(FB訊息容易被淹沒)
@@ -575,7 +446,6 @@ ID:@homedesyne`;
   }
 
   renderTable();
-  renderPromoFabricTable();
 </script>
 
 </body>
