@@ -535,9 +535,9 @@ const FABRICS = [
   F('砂灰色','透光+防焰','TW043','80',300,'V',4200),
 ];
 
-const INSTALL_FEE = 3600;
+const INSTALL_FEE = 3600; // 每組窗安裝費（原價）
+const MULTI_WINDOW_DISCOUNT = 2000; // 同日安裝，第2組窗起每窗優惠（僅到府安裝收）
 const EXTRA_TRACK_FEE = 2000; // 單組軌道片數 >= 8（僅到府安裝收）
-const EXTRA_WINDOW_FEE = 1500; // 第2組窗起，每窗（僅到府安裝收）
 const NO_ELEVATOR_FEE = 500;   // 僅到府安裝收
 const SHIP_FEE_PER_WINDOW = 300; // DIY 模式：每組軌道運費
 const TAX_RATE = 1.05;
@@ -729,7 +729,7 @@ function updateServiceCard(){
     note.textContent = 'DIY 模式：不收安裝費、軌道片數加收、多窗加收、無電梯加價，改以每組軌道 $300 估算運費（未稅）。';
   } else {
     elevatorRow.style.display = 'flex';
-    note.textContent = '安裝費 $3,600 與無電梯加價，預設整張訂單只收一次（不是每窗都收）。';
+    note.textContent = `每組窗安裝費 $${INSTALL_FEE.toLocaleString()}；同一張報價單有多組窗時，視為同日安裝，第2組窗起每窗優惠 $${MULTI_WINDOW_DISCOUNT.toLocaleString()}（即每窗 $${(INSTALL_FEE-MULTI_WINDOW_DISCOUNT).toLocaleString()}）。無電梯加價整張訂單只收一次（不是每窗都收）。`;
   }
 }
 
@@ -815,11 +815,11 @@ function renderWindows(){
         </div>`;
     }).join('');
 
-    const extraLabel = serviceMode === 'install' ? '+$1,500' : '+$300 運費';
+    const extraLabel = serviceMode === 'install' ? `同日優惠後安裝費 $${(INSTALL_FEE-MULTI_WINDOW_DISCOUNT).toLocaleString()}` : '+$300 運費';
 
     div.innerHTML = `
       <div class="window-head">
-        <div class="window-title">窗 ${idx+1}${idx>0 ? '（第 '+(idx+1)+' 組軌道 '+extraLabel+'）' : ''}</div>
+        <div class="window-title">窗 ${idx+1}${idx>0 ? '（第 '+(idx+1)+' 組軌道，'+extraLabel+'）' : ''}</div>
         ${windows.length > 1 ? `<button class="danger" onclick="removeWindow(${w.id})">刪除此窗</button>` : ''}
       </div>
 
@@ -938,24 +938,28 @@ function computeAll(promoFlag){
     });
   });
 
-  let installFee = 0, extraWindowFeeTotal = 0, elevatorFee = 0, shippingFeeTotal = 0;
+  let installFeeFirst = 0, extraWindowFeeTotal = 0, elevatorFee = 0, shippingFeeTotal = 0;
 
   if (serviceMode === 'install'){
-    installFee = INSTALL_FEE;
-    extraWindowFeeTotal = validWindowCount > 1 ? (validWindowCount - 1) * EXTRA_WINDOW_FEE : 0;
+    // 每組窗安裝費 $3,600；同一張報價單有多組窗時視為同日安裝，
+    // 第2組窗起每窗優惠 $2,000（即 $1,600／窗）
+    installFeeFirst = validWindowCount > 0 ? INSTALL_FEE : 0;
+    extraWindowFeeTotal = validWindowCount > 1 ? (validWindowCount - 1) * (INSTALL_FEE - MULTI_WINDOW_DISCOUNT) : 0;
     const noElevator = document.getElementById('noElevator') ? document.getElementById('noElevator').checked : false;
     elevatorFee = noElevator ? NO_ELEVATOR_FEE : 0;
   } else {
     shippingFeeTotal = validWindowCount * SHIP_FEE_PER_WINDOW;
   }
 
-  const preTax = trackSubtotal + fabricSubtotal + installFee + extraTrackFeeTotal + extraWindowFeeTotal + elevatorFee + shippingFeeTotal;
+  const installFeeTotal = installFeeFirst + extraWindowFeeTotal;
+  const preTax = trackSubtotal + fabricSubtotal + installFeeTotal + extraTrackFeeTotal + elevatorFee + shippingFeeTotal;
   const total = Math.ceil((preTax * TAX_RATE) / 1000) * 1000; // 對外報價：無條件進位到千位數
 
   return {
     hasError, validWindowCount, windowLines,
-    trackSubtotal, fabricSubtotal, extraTrackFeeTotal, extraWindowFeeTotal,
-    elevatorFee, installFee, shippingFeeTotal, preTax, total,
+    trackSubtotal, fabricSubtotal, extraTrackFeeTotal,
+    installFeeFirst, extraWindowFeeTotal, installFeeTotal,
+    elevatorFee, shippingFeeTotal, preTax, total,
     promoOriginalSubtotal, promoDiscountedSubtotal, promoItemCount
   };
 }
@@ -1004,9 +1008,9 @@ function renderSummary(){
     <div class="summary-line"><span class="lbl">軌道小計（${r.validWindowCount}組）</span><span>$${r.trackSubtotal.toLocaleString()}</span></div>
     <div class="summary-line"><span class="lbl">布料小計</span><span>$${r.fabricSubtotal.toLocaleString()}</span></div>
     ${serviceMode === 'install' ? `
-      <div class="summary-line"><span class="lbl">安裝費</span><span>$${r.installFee.toLocaleString()}</span></div>
+      <div class="summary-line"><span class="lbl">安裝費（第1組窗）</span><span>$${r.installFeeFirst.toLocaleString()}</span></div>
+      ${r.extraWindowFeeTotal ? `<div class="summary-line"><span class="lbl">安裝費（第2組窗起，同日優惠 $${(INSTALL_FEE-MULTI_WINDOW_DISCOUNT).toLocaleString()}／窗 x ${r.validWindowCount-1}窗）</span><span>$${r.extraWindowFeeTotal.toLocaleString()}</span></div>` : ''}
       ${r.extraTrackFeeTotal ? `<div class="summary-line"><span class="lbl">軌道片數≥8 加收</span><span>$${r.extraTrackFeeTotal.toLocaleString()}</span></div>` : ''}
-      ${r.extraWindowFeeTotal ? `<div class="summary-line"><span class="lbl">多窗加收（第2組起 x $1,500）</span><span>$${r.extraWindowFeeTotal.toLocaleString()}</span></div>` : ''}
       ${r.elevatorFee ? `<div class="summary-line"><span class="lbl">無電梯加收</span><span>$${r.elevatorFee.toLocaleString()}</span></div>` : ''}
     ` : `
       <div class="summary-line"><span class="lbl">運費（DIY，每組 $300 x ${r.validWindowCount}）</span><span>$${r.shippingFeeTotal.toLocaleString()}</span></div>
@@ -1029,9 +1033,9 @@ function renderSummary(){
   });
 
   if (serviceMode === 'install'){
-    text += `安裝費：$${r.installFee.toLocaleString()}\n`;
+    text += `安裝費（第1組窗）：$${r.installFeeFirst.toLocaleString()}\n`;
+    if (r.extraWindowFeeTotal) text += `安裝費（第2組窗起，同日優惠 $${(INSTALL_FEE-MULTI_WINDOW_DISCOUNT).toLocaleString()}／窗 x ${r.validWindowCount-1}窗）：$${r.extraWindowFeeTotal.toLocaleString()}\n`;
     if (r.extraTrackFeeTotal) text += `軌道片數≥8加收：$${r.extraTrackFeeTotal.toLocaleString()}\n`;
-    if (r.extraWindowFeeTotal) text += `多窗加收：$${r.extraWindowFeeTotal.toLocaleString()}\n`;
     if (r.elevatorFee) text += `無電梯加收：$${r.elevatorFee.toLocaleString()}\n`;
   } else {
     text += `運費（DIY，每組 $300 x ${r.validWindowCount}）：$${r.shippingFeeTotal.toLocaleString()}\n`;
