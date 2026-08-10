@@ -383,8 +383,11 @@
 
     const dimLine = `捷安片簾 W${w} H${displayHeight} 公分`;
 
-    const heightNote = result.heightCapped
-      ? `\n\n高超過三百公分，需額外加裝金屬支架降高度\n請問您電話\n我請業務與您確認降高細節`
+    const heightNoteOnsite = result.heightCapped
+      ? `\n\n片簾高度上限300cm\n超過需額外加裝金屬支架降高度\n須請當地經銷／業務評估降高報價\n\n您可提供電話\n我請當地夥伴就近服務您`
+      : '';
+    const heightNoteDiy = result.heightCapped
+      ? `\n\n片簾高度上限300公分\n超過須請您另外請木工降低高度\n或改為到府安裝`
       : '';
 
     const onsiteText =
@@ -399,7 +402,7 @@ ${onsiteLine}
 
 🙂 您可提供電話，我請當地夥伴就近服務✨
 
-${onsiteBreakdown}${heightNote}`;
+${onsiteBreakdown}${heightNoteOnsite}`;
 
     const diyLine = result.diyPrice !== null
       ? `DIY粗估約 $${result.diyPrice.toLocaleString()} 起`
@@ -423,7 +426,7 @@ DIY粗估不含離島運費，需另外估價
 如需進一步討論DIY客製及選款估價
 請加官方LINE(FB訊息容易被淹沒)
 https://lihi.cc/kV4zZ
-ID:@homedesyne${heightNote}`;
+ID:@homedesyne${heightNoteDiy}`;
 
     setBox('outputOnsite', 'copyBtnOnsite', onsiteText, false);
     setBox('outputDiy', 'copyBtnDiy', diyText, false);
