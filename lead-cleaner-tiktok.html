@@ -255,6 +255,11 @@ function cleanPhone(raw){
   return "'" + digits; // 前面加單引號，Sheet 會以文字格式顯示，避免變成 9xxxxxxxx 或科學記號
 }
 
+function withQuotePrefix(value){
+  if(!value) return "";
+  return "'" + value;
+}
+
 function withPrefix(value, prefix){
   if(!value) return "";
   return prefix + value;
@@ -338,7 +343,7 @@ function convert(){
       "",                                     // 安裝（無對應資料，維持空白）
       nameWithGender(name, gender),          // 稱呼／先生女士
       cleanPhone(phone),                     // 電話
-      get(row, idx.lineId),                  // LINE ID
+      withQuotePrefix(get(row, idx.lineId)), // LINE ID（前面加單引號，避免開頭0被吃掉或變科學記號）
       get(row, idx.city),                    // 安裝縣市／地區
       "",                                     // 住宅屬性（維持空白）
       withPrefix(get(row, idx.width), "W:"),   // 遮蔽寬度cm，前面加 W:
