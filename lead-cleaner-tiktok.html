@@ -346,18 +346,36 @@ function convert(){
       get(row, idx.contactNeed),             // 寬高補充說明 = 您的聯繫需求
       "",                                     // 安裝空間（維持空白）
       get(row, idx.purpose),                 // 您期望用捷安片簾滿足什麼需求? = 用途
-      "Tiktok 抖音（網紅小行"                           // 您是從何認識捷安的呢？（固定值）
+      "Tiktok 抖音 (網紅小行"                  // 您是從何認識捷安的呢？（固定值）
     ];
   });
 
+  // 依時間戳記（時間戳記欄位在 index 0）由舊到新排序
+  const byTime = (a, b) => (a[0] || "").localeCompare(b[0] || "");
+
+  // 安裝縣市／地區在 index 7，判斷是否為台北／新北／桃園
+  function isSpecialCity(c){
+    if(!c) return false;
+    return /台北|臺北|新北|桃園/.test(c);
+  }
+
+  const normalRows = outRows.filter(r => !isSpecialCity(r[7])).sort(byTime);
+  const specialRows = outRows.filter(r => isSpecialCity(r[7])).sort(byTime);
+
+  let finalDataRows = normalRows;
+  if(specialRows.length){
+    const blankRow = TARGET_HEADERS.map(() => "");
+    finalDataRows = normalRows.concat([blankRow], specialRows);
+  }
+
   const includeHeader = document.getElementById("includeHeader").checked;
-  const finalRows = includeHeader ? [TARGET_HEADERS, ...outRows] : outRows;
+  const finalRows = includeHeader ? [TARGET_HEADERS, ...finalDataRows] : finalDataRows;
   const outputText = finalRows.map(r => r.join("\t")).join("\n");
 
   document.getElementById("output").value = outputText;
-  rowCountEl.textContent = outRows.length + " 筆資料";
+  rowCountEl.textContent = outRows.length + " 筆資料" + (specialRows.length ? "（含 " + specialRows.length + " 筆台北/新北/桃園，已排最下方另成一組）" : "");
 
-  renderPreview(TARGET_HEADERS, outRows);
+  renderPreview(TARGET_HEADERS, finalDataRows);
 }
 
 function renderPreview(headers, rows){
