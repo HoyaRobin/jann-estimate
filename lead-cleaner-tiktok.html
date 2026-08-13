@@ -227,9 +227,16 @@ function normalize(s){
 
 function findColIndex(headers, aliasKey){
   const aliases = SOURCE_ALIASES[aliasKey].map(normalize);
+  // 第一輪：完全相同才算（避免 "ad_name" 被誤判成 "name"）
+  for(let i=0;i<headers.length;i++){
+    if(aliases.includes(normalize(headers[i]))){
+      return i;
+    }
+  }
+  // 第二輪：找不到完全相同時，才用包含比對做為備用
   for(let i=0;i<headers.length;i++){
     const h = normalize(headers[i]);
-    if(aliases.some(a => h === a || h.includes(a))){
+    if(aliases.some(a => h.includes(a))){
       return i;
     }
   }
@@ -246,6 +253,11 @@ function cleanPhone(raw){
     digits = "0" + digits;
   }
   return "'" + digits; // 前面加單引號，Sheet 會以文字格式顯示，避免變成 9xxxxxxxx 或科學記號
+}
+
+function withPrefix(value, prefix){
+  if(!value) return "";
+  return prefix + value;
 }
 
 function cleanTimestamp(raw){
@@ -329,8 +341,8 @@ function convert(){
       get(row, idx.lineId),                  // LINE ID
       get(row, idx.city),                    // 安裝縣市／地區
       "",                                     // 住宅屬性（維持空白）
-      get(row, idx.width),                   // 遮蔽寬度cm
-      get(row, idx.height),                  // 遮蔽高度cm
+      withPrefix(get(row, idx.width), "W:"),   // 遮蔽寬度cm，前面加 W:
+      withPrefix(get(row, idx.height), "H:"),  // 遮蔽高度cm，前面加 H:
       get(row, idx.contactNeed),             // 寬高補充說明 = 您的聯繫需求
       "",                                     // 安裝空間（維持空白）
       get(row, idx.purpose),                 // 您期望用捷安片簾滿足什麼需求? = 用途
