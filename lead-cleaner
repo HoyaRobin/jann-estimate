@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客戶資料清洗整理工具</title>
+<style>
+  :root{
+    --bg:#f6f4f0;
+    --panel:#ffffff;
+    --ink:#2b2620;
+    --sub:#6b6255;
+    --accent:#d9772f;
+    --accent-dark:#b85f22;
+    --line:#e6e0d6;
+    --ok:#3f7a4d;
+    --mono: "SFMono-Regular", Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    padding:24px;
+  }
+  h1{
+    font-size:20px;
+    margin:0 0 4px;
+  }
+  .sub{
+    color:var(--sub);
+    font-size:13px;
+    margin-bottom:20px;
+  }
+  .wrap{
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  @media (max-width:840px){
+    .grid{grid-template-columns:1fr;}
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+  }
+  .panel h2{
+    font-size:14px;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  textarea{
+    width:100%;
+    height:320px;
+    font-family:var(--mono);
+    font-size:12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px;
+    resize:vertical;
+    background:#fdfcfa;
+    color:var(--ink);
+    white-space:pre;
+  }
+  .row{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:12px;
+    flex-wrap:wrap;
+  }
+  button{
+    border:none;
+    border-radius:8px;
+    padding:10px 16px;
+    font-size:13px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+  }
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-copy{
+    background:var(--ok);
+    color:#fff;
+  }
+  .btn-copy:hover{background:#316540;}
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--ink);
+  }
+  .status{
+    font-size:12px;
+    color:var(--ok);
+    margin-left:4px;
+  }
+  label.chk{
+    font-size:12px;
+    color:var(--sub);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .preview{
+    overflow:auto;
+    max-height:320px;
+    border:1px solid var(--line);
+    border-radius:8px;
+  }
+  table{
+    border-collapse:collapse;
+    width:100%;
+    font-size:11.5px;
+  }
+  th,td{
+    border:1px solid var(--line);
+    padding:5px 7px;
+    white-space:nowrap;
+    text-align:left;
+  }
+  th{
+    background:#f1ece3;
+    position:sticky;
+    top:0;
+  }
+  .note{
+    font-size:12px;
+    color:var(--sub);
+    line-height:1.6;
+    margin-top:10px;
+  }
+  .badge{
+    display:inline-block;
+    background:#f1ece3;
+    color:var(--sub);
+    border-radius:6px;
+    padding:2px 7px;
+    font-size:11px;
+    margin-left:6px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>客戶資料清洗整理工具</h1>
+  <div class="sub">貼上從 Excel 複製的原始資料（含標題列）→ 自動整理成目標 Sheet 欄位順序，並清洗電話號碼格式。</div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>① 貼上原始資料（Excel 複製，Tab 分隔）</h2>
+      <textarea id="input" placeholder="請直接從 Excel 選取範圍複製後，貼在這裡（包含標題列）"></textarea>
+      <div class="row">
+        <button class="btn-primary" onclick="convert()">開始整理 →</button>
+        <label class="chk"><input type="checkbox" id="includeHeader" checked> 輸出含標題列</label>
+        <span class="status" id="parseStatus"></span>
+      </div>
+      <div class="note">
+        原始欄位（會自動辨識，順序可不同，其餘沒用到的欄位會忽略）：created_time、City、Gender、Name、Phone number、LINE ID、您的聯繫需求、用途、遮蔽寬度cm、遮蔽高度cm
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>② 整理後結果（可直接貼回 Sheet）<span class="badge" id="rowCount"></span></h2>
+      <textarea id="output" readonly placeholder="按下「開始整理」後，結果會顯示在這裡"></textarea>
+      <div class="row">
+        <button class="btn-copy" onclick="copyOutput()">📋 一鍵複製</button>
+        <button class="btn-ghost" onclick="clearAll()">清空</button>
+        <span class="status" id="copyStatus"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px;">
+    <h2>預覽</h2>
+    <div class="preview">
+      <table id="previewTable"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+const TARGET_HEADERS = [
+  "時間戳記",
+  "客戶類型",
+  "商品",
+  "安裝",
+  "稱呼／先生女士（如企業需求，請填寫公司名稱）",
+  "電話",
+  "LINE ID",
+  "安裝縣市／地區",
+  "住宅屬性",
+  "遮蔽寬度cm",
+  "遮蔽高度cm",
+  "寬高補充說明",
+  "安裝空間",
+  "您期望用捷安片簾滿足什麼需求?",
+  "您是從何認識捷安的呢？"
+];
+
+// 可能出現的原始欄位名稱（用來模糊比對）
+const SOURCE_ALIASES = {
+  createdTime: ["created_time", "created time", "時間戳記", "建立時間"],
+  city: ["city", "城市", "地區", "縣市"],
+  gender: ["gender", "性別"],
+  name: ["name", "姓名", "稱呼"],
+  phone: ["phone number", "phone", "電話", "手機", "手機號碼"],
+  lineId: ["line id", "lineid", "line"],
+  contactNeed: ["您的聯繫需求", "聯繫需求"],
+  purpose: ["用途"],
+  width: ["遮蔽寬度cm", "寬度", "width"],
+  height: ["遮蔽高度cm", "高度", "height"]
+};
+
+function normalize(s){
+  return (s||"").toString().trim().toLowerCase();
+}
+
+function findColIndex(headers, aliasKey){
+  const aliases = SOURCE_ALIASES[aliasKey].map(normalize);
+  for(let i=0;i<headers.length;i++){
+    const h = normalize(headers[i]);
+    if(aliases.some(a => h === a || h.includes(a))){
+      return i;
+    }
+  }
+  return -1;
+}
+
+function cleanPhone(raw){
+  if(!raw) return "";
+  let digits = raw.toString().replace(/[^\d]/g, ""); // 移除所有非數字（含 + 空白）
+  if(digits.length === 0) return "";
+  if(digits.startsWith("886")){
+    digits = "0" + digits.slice(3);
+  } else if(!digits.startsWith("0")){
+    digits = "0" + digits;
+  }
+  return "'" + digits; // 前面加單引號，Sheet 會以文字格式顯示，避免變成 9xxxxxxxx 或科學記號
+}
+
+function cleanTimestamp(raw){
+  if(!raw) return "";
+  // 例如 "2026-08-13 08:34:16(UTC+08:00)" → "2026-08-13 08:34:16"
+  return raw.toString().replace(/\(UTC[^)]*\)/i, "").trim();
+}
+
+function nameWithGender(name, gender){
+  name = (name||"").toString().trim();
+  const g = normalize(gender);
+  if(!name) return "";
+  if(g === "male" || g === "男") return name + " 先生";
+  if(g === "female" || g === "女") return name + " 女士";
+  return name; // Rather not say 或其他，僅保留姓名
+}
+
+function parseTSV(text){
+  // 支援 Windows/Mac 換行，並過濾掉完全空白的行
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n")
+    .filter(l => l.trim() !== "");
+  return lines.map(l => l.split("\t"));
+}
+
+function convert(){
+  const raw = document.getElementById("input").value;
+  const statusEl = document.getElementById("parseStatus");
+  const rowCountEl = document.getElementById("rowCount");
+  if(!raw.trim()){
+    statusEl.textContent = "請先貼上原始資料";
+    statusEl.style.color = "#b03a2e";
+    return;
+  }
+
+  const rows = parseTSV(raw);
+  if(rows.length < 2){
+    statusEl.textContent = "找不到資料列，請確認有貼上標題列＋資料列";
+    statusEl.style.color = "#b03a2e";
+    return;
+  }
+
+  const headers = rows[0];
+  const dataRows = rows.slice(1);
+
+  const idx = {
+    createdTime: findColIndex(headers, "createdTime"),
+    city: findColIndex(headers, "city"),
+    gender: findColIndex(headers, "gender"),
+    name: findColIndex(headers, "name"),
+    phone: findColIndex(headers, "phone"),
+    lineId: findColIndex(headers, "lineId"),
+    contactNeed: findColIndex(headers, "contactNeed"),
+    purpose: findColIndex(headers, "purpose"),
+    width: findColIndex(headers, "width"),
+    height: findColIndex(headers, "height")
+  };
+
+  const missing = Object.entries(idx).filter(([k,v]) => v === -1).map(([k]) => k);
+  if(missing.length){
+    statusEl.style.color = "#b8860b";
+    statusEl.textContent = "提醒：以下欄位未辨識到，將留空 → " + missing.join(", ");
+  } else {
+    statusEl.style.color = "#3f7a4d";
+    statusEl.textContent = "欄位辨識成功";
+  }
+
+  const get = (row, i) => (i === -1 || row[i] === undefined) ? "" : row[i].toString().trim();
+
+  const outRows = dataRows.map(row => {
+    const name = get(row, idx.name);
+    const gender = get(row, idx.gender);
+    const phone = get(row, idx.phone);
+
+    return [
+      cleanTimestamp(get(row, idx.createdTime)), // 時間戳記 = created_time
+      "",                                     // 客戶類型（無對應資料，維持空白）
+      "",                                     // 商品（無對應資料，維持空白）
+      "",                                     // 安裝（無對應資料，維持空白）
+      nameWithGender(name, gender),          // 稱呼／先生女士
+      cleanPhone(phone),                     // 電話
+      get(row, idx.lineId),                  // LINE ID
+      get(row, idx.city),                    // 安裝縣市／地區
+      "",                                     // 住宅屬性（維持空白）
+      get(row, idx.width),                   // 遮蔽寬度cm
+      get(row, idx.height),                  // 遮蔽高度cm
+      get(row, idx.contactNeed),             // 寬高補充說明 = 您的聯繫需求
+      "",                                     // 安裝空間（維持空白）
+      get(row, idx.purpose),                 // 您期望用捷安片簾滿足什麼需求? = 用途
+      "Tikotk 抖音"                           // 您是從何認識捷安的呢？（固定值）
+    ];
+  });
+
+  const includeHeader = document.getElementById("includeHeader").checked;
+  const finalRows = includeHeader ? [TARGET_HEADERS, ...outRows] : outRows;
+  const outputText = finalRows.map(r => r.join("\t")).join("\n");
+
+  document.getElementById("output").value = outputText;
+  rowCountEl.textContent = outRows.length + " 筆資料";
+
+  renderPreview(TARGET_HEADERS, outRows);
+}
+
+function renderPreview(headers, rows){
+  const thead = document.querySelector("#previewTable thead");
+  const tbody = document.querySelector("#previewTable tbody");
+  thead.innerHTML = "<tr>" + headers.map(h => `<th>${escapeHtml(h)}</th>`).join("") + "</tr>";
+  tbody.innerHTML = rows.map(r =>
+    "<tr>" + r.map(c => `<td>${escapeHtml(c)}</td>`).join("") + "</tr>"
+  ).join("");
+}
+
+function escapeHtml(s){
+  return (s||"").toString()
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function copyOutput(){
+  const outputEl = document.getElementById("output");
+  const statusEl = document.getElementById("copyStatus");
+  if(!outputEl.value){
+    statusEl.textContent = "尚無內容可複製";
+    statusEl.style.color = "#b03a2e";
+    return;
+  }
+  navigator.clipboard.writeText(outputEl.value).then(() => {
+    statusEl.textContent = "已複製！可直接到 Sheet 貼上";
+    statusEl.style.color = "#3f7a4d";
+  }).catch(() => {
+    outputEl.select();
+    document.execCommand("copy");
+    statusEl.textContent = "已複製（備用方式）";
+    statusEl.style.color = "#3f7a4d";
+  });
+}
+
+function clearAll(){
+  document.getElementById("input").value = "";
+  document.getElementById("output").value = "";
+  document.getElementById("parseStatus").textContent = "";
+  document.getElementById("copyStatus").textContent = "";
+  document.getElementById("rowCount").textContent = "";
+  document.querySelector("#previewTable thead").innerHTML = "";
+  document.querySelector("#previewTable tbody").innerHTML = "";
+}
+</script>
+</body>
+</html>
