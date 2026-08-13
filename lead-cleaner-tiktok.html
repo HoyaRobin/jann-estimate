@@ -353,10 +353,10 @@ function convert(){
   // 依時間戳記（時間戳記欄位在 index 0）由舊到新排序
   const byTime = (a, b) => (a[0] || "").localeCompare(b[0] || "");
 
-  // 安裝縣市／地區在 index 7，判斷是否為台北／新北／桃園
+  // 安裝縣市／地區在 index 7，判斷是否為台北／新北／桃園／基隆
   function isSpecialCity(c){
     if(!c) return false;
-    return /台北|臺北|新北|桃園/.test(c);
+    return /台北|臺北|新北|桃園|基隆/.test(c);
   }
 
   const normalRows = outRows.filter(r => !isSpecialCity(r[7])).sort(byTime);
@@ -373,7 +373,7 @@ function convert(){
   const outputText = finalRows.map(r => r.join("\t")).join("\n");
 
   document.getElementById("output").value = outputText;
-  rowCountEl.textContent = outRows.length + " 筆資料" + (specialRows.length ? "（含 " + specialRows.length + " 筆台北/新北/桃園，已排最下方另成一組）" : "");
+  rowCountEl.textContent = outRows.length + " 筆資料" + (specialRows.length ? "（含 " + specialRows.length + " 筆台北/新北/桃園/基隆，已排最下方另成一組）" : "");
 
   renderPreview(TARGET_HEADERS, finalDataRows);
 }
