@@ -152,7 +152,7 @@
   <div class="header-inner">
     <div class="eyebrow">內部工具 · 橘子班</div>
     <h1>線上粗估，客服速速前</h1>
-    <div class="sub">自動比對 40 / 60 / 80mm 三種片幅款式,取最經濟的起價</div>
+    <div class="sub">自動比對 40 / 60 / 80mm 三種片幅款式,取最經濟的起價(顯示金額無條件進位到千位)</div>
   </div>
 </div>
 
@@ -217,7 +217,7 @@
           <tbody id="priceBody"></tbody>
         </table>
         <div class="note">
-          「－」代表這個規格沒有此高度級距的報價(例如 80mm 片幅目前只做高300內)。系統會自動找每個片幅系列(40/60/80)裡「最大寬 ≥ 輸入寬度」且最接近的規格,取符合高度級距的到府低價,三個系列中取最低的作為「起」價。若輸入高度超過300cm,系統會自動改用300cm級距計價,並在文字末尾附加加裝金屬支架的提示;若寬度超過所有規格上限,會提示改人工報價。
+          「－」代表這個規格沒有此高度級距的報價(例如 80mm 片幅目前只做高300內)。系統會自動找每個片幅系列(40/60/80)裡「最大寬 ≥ 輸入寬度」且最接近的規格,取符合高度級距的到府低價,三個系列中取最低的作為「起」價。若輸入高度超過300cm,系統會自動改用300cm級距計價,並在文字末尾附加加裝金屬支架的提示;若寬度超過所有規格上限,會提示改人工報價。文字輸出的所有金額皆無條件進位到千位數(例如表定 23,400 會顯示為 24,000)。
         </div>
       </div>
     </details>
@@ -283,6 +283,11 @@
 
   function updateBuffer(value){
     ONSITE_BUFFER = Number(value) || 0;
+  }
+
+  // 顯示用金額無條件進位到千位數(例如 23400 -> 24000)
+  function ceilTo1000(price){
+    return Math.ceil(price / 1000) * 1000;
   }
 
   function matchesForField(width, lowField, fallbackField){
@@ -375,10 +380,10 @@
     const displayHeight = result.heightCapped ? result.effectiveHeight : h;
 
     const onsiteLine = result.onsitePrice !== null
-      ? `當地到府粗估約 $${result.onsitePrice.toLocaleString()} 起`
+      ? `當地到府粗估約 $${ceilTo1000(result.onsitePrice).toLocaleString()} 起`
       : `當地到府暫無此尺寸資料`;
     const onsiteBreakdown = result.onsiteMatches
-      .map(m => `${seriesLabel[m.series]}:適用規格 ${m.spec}(最大寬${m.maxWidth}),到府約 $${m.price.toLocaleString()} 起`)
+      .map(m => `${seriesLabel[m.series]}:適用規格 ${m.spec}(最大寬${m.maxWidth}),到府約 $${ceilTo1000(m.price).toLocaleString()} 起`)
       .join('\n');
 
     const dimLine = `捷安片簾 W${w} H${displayHeight} 公分`;
@@ -405,10 +410,10 @@ ${onsiteLine}
 ${onsiteBreakdown}${heightNoteOnsite}`;
 
     const diyLine = result.diyPrice !== null
-      ? `DIY粗估約 $${result.diyPrice.toLocaleString()} 起`
+      ? `DIY粗估約 $${ceilTo1000(result.diyPrice).toLocaleString()} 起`
       : `DIY暫無此尺寸資料`;
     const diyBreakdown = result.diyMatches
-      .map(m => `${seriesLabel[m.series]}:適用規格 ${m.spec}(最大寬${m.maxWidth}),DIY約 $${m.price.toLocaleString()} 起`)
+      .map(m => `${seriesLabel[m.series]}:適用規格 ${m.spec}(最大寬${m.maxWidth}),DIY約 $${ceilTo1000(m.price).toLocaleString()} 起`)
       .join('\n');
 
     const diyText =
